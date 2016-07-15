@@ -16,6 +16,16 @@ public class Ball {
 		b.radius = Area.RANDOM.nextInt(BallConstant.FOOD_MAX_RADIUS);
 		return b;
 	}
+	public static Ball initPlayer(){
+		Ball ball = new Ball();
+		ball.setType(BallConstant.BALL_TYPE_PLAYER);
+		ball.setX(Area.RANDOM.nextInt(Area.WIDTH));
+		ball.setY(Area.RANDOM.nextInt(Area.HEIGHT));
+		ball.setxS(10);
+		ball.setyS(20);
+		ball.setRadius(30);
+		return ball;
+	}
 	public void dead(){
 		this.type = BallConstant.BALL_TYPE_DEAD;
 	}

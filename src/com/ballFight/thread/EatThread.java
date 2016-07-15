@@ -3,6 +3,7 @@ package com.ballFight.thread;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.ballFight.bean.Area;
 import com.ballFight.bean.Ball;
@@ -50,8 +51,16 @@ public class EatThread extends Thread{
 					}
 				}
 			}
-			System.out.println(Area.balls.size());
-			System.out.println(Area.balls);
+//			synchronized (Area.BALLCOUNT) {
+//				Area.BALLCOUNT.notifyAll();
+//			}
+//			System.out.println(Area.balls.size());
+//			System.out.println(Area.balls);
+			try {
+				TimeUnit.SECONDS.sleep(1);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	public static void main(String[] args) {

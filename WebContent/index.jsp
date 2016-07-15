@@ -21,14 +21,6 @@ var ctx=canvas.getContext('2d');
 ctx.fillStyle='#FFF';
 ctx.fillRect(0,0,500,500);
 
-var i=0;
-while(i<10){
-	i++;
-	drawABall(Math.random()*500, Math.random()*500, Math.random()*20, 'black');
-}
-
-
-
 function drawABall(x,y,radius,color){
 	ctx.fillStyle=color;
 	ctx.beginPath();
@@ -36,6 +28,15 @@ function drawABall(x,y,radius,color){
 	ctx.closePath();
 	ctx.fill();
 }
+function repaint(){
+	$.getJSON("JsonServlet", function(json){
+		ctx.clearRect(0,0,500,500);
+		$.each(json,function(i,item){
+			drawABall(item.x,item.y,item.radius,'black');
+		});
+	});
+}
+window.setInterval(repaint,1000);
 </script>
 
 </body>

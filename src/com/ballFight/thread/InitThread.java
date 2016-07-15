@@ -19,11 +19,13 @@ public class InitThread extends Thread{
 			synchronized(Area.balls){
 				Area.balls.addAll(ballList);
 			}
-			try {
-				Area.BALLCOUNT.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+//			synchronized (Area.BALLCOUNT) {
+//				try {
+//					Area.BALLCOUNT.wait();
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+//			}
 		}
 	}
 }

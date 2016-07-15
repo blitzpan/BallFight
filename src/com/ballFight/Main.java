@@ -2,9 +2,8 @@ package com.ballFight;
 
 import com.ballFight.bean.Area;
 import com.ballFight.bean.Ball;
-import com.ballFight.bean.BallConstant;
-import com.ballFight.thread.InitThread;
 import com.ballFight.thread.EatThread;
+import com.ballFight.thread.InitThread;
 
 public class Main {
 	public static void main(String[] args) {
@@ -23,19 +22,8 @@ public class Main {
 		EatThread mt = new EatThread();
 		mt.start();
 		//添加player
-		Area.balls.add(initPlayer());
-		Area.balls.add(initPlayer());
-		Area.balls.add(initPlayer());
+		Area.balls.add(Ball.initPlayer());
+		Area.balls.add(Ball.initPlayer());
+		Area.balls.add(Ball.initPlayer());
 	}
-	public static Ball initPlayer(){
-		Ball ball = new Ball();
-		ball.setType(BallConstant.BALL_TYPE_PLAYER);
-		ball.setX(Area.RANDOM.nextInt(Area.WIDTH));
-		ball.setY(Area.RANDOM.nextInt(Area.HEIGHT));
-		ball.setxS(1);
-		ball.setyS(2);
-		ball.setRadius(30);
-		return ball;
-	}
-
 }
