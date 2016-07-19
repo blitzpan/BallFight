@@ -1,5 +1,9 @@
 package com.test;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -11,6 +15,9 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
+import org.apache.log4j.Logger;
+
+import com.ballFight.bean.Msg;
 import com.ballFight.bean.Room;
 import com.ballFight.bean.User;
 
@@ -19,6 +26,7 @@ import net.sf.json.JSONObject;
 //该注解用来指定一个URI，客户端可以通过这个URI来连接到WebSocket。类似Servlet的注解mapping。无需在web.xml中配置。
 @ServerEndpoint("/websocket1")
 public class MyWebSocket1 {
+	private static Logger log = Logger.getLogger(MyWebSocket1.class);
     //静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
     private static int onlineCount = 0;
     //concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。若要实现服务端与单一客户端通信的话，可以使用Map来存放，其中Key可以为用户标识
@@ -68,6 +76,7 @@ public class MyWebSocket1 {
     @OnMessage
     public void onMessage(String message, Session session) {
     	System.out.println("收到消息=" + message);
+    	System.out.println("session"+session);
     	JSONObject jo = JSONObject.fromObject(message);
     	String type = jo.getString("type");
     	if(type.equals("login")){
@@ -76,13 +85,36 @@ public class MyWebSocket1 {
         	if(user!=null){//用户已经登陆
         		SESSION_USER_MAP.remove(user.getSession());
         		user.setSession(session);
+        		SESSION_USER_MAP.put(session, user);
+        		Msg msg = new Msg();
+        		Map userMap = new HashMap();
+        		userMap.put("userName", user.getName());
+        		msg.success("refreshUser","", userMap);
+				sendMessage(session, JSONObject.fromObject(msg).toString());
+				msg = new Msg();
+            	msg.success("rooms", "", getAllRooms(user));
+				sendMessage(session, JSONObject.fromObject(msg).toString());
         	}else{//用户没有登陆
         		user = new User();
             	user.setSessionId(sessionId);
             	user.setSession(session);
             	SESSION_USER_MAP.put(session, user);
             	SESSIONID_USER_MAP.put(sessionId, user);
+            	Msg msg = new Msg();
+            	msg.success("setNickName","请设置昵称！",null);
+				sendMessage(session, JSONObject.fromObject(msg).toString());
+				msg = new Msg();
+            	msg.success("rooms", "", getAllRooms(user));
+				sendMessage(session, JSONObject.fromObject(msg).toString());
         	}
+        }else if(type.equals("setNickName")){//
+        	User user = SESSION_USER_MAP.get(session);
+        	user.setName(jo.getString("nickName"));
+    		Msg msg = new Msg();
+    		Map userMap = new HashMap();
+    		userMap.put("userName", user.getName());
+    		msg.success("refreshUser","", userMap);
+			sendMessage(session, JSONObject.fromObject(msg).toString());
         }else if(type.equals("inRoom")){//进入一个房间
         	String roomId = jo.getString("roomId");
         	Room room = ROOMID_ROOM_MAP.get(roomId);
@@ -91,18 +123,59 @@ public class MyWebSocket1 {
         		removeUserFromRoom(user);
             	user.setRoomId(roomId);
             	room.getUsers().add(user);
+            	Msg msg = new Msg();
+            	msg.success("refreshFriends", "", getARoomUsers(room));
+            	String refreshFriends = JSONObject.fromObject(msg).toString();
+    			sendMessage(session, refreshFriends);
+    			
+    			msg = new Msg();
+            	msg.success("rooms", "", getAllRooms(user));
+				sendMessage(session, JSONObject.fromObject(msg).toString());
+				
+				List<User> users = room.getUsers();
+        		for(User tempUser : users){
+        			if(!tempUser.equals(users)){
+        				sendMessage(session, refreshFriends);
+        			}
+        		}
+        	}else{
+        		Msg msg = new Msg();
+            	msg.fail("error", "该房间不存在！");
+    			sendMessage(session, JSONObject.fromObject(msg).toString());
         	}
-        }else if(type.equals("newRoom")){//创建一个房间
+        }else if(type.equals("mkRoom")){//创建一个房间
         	User user = SESSION_USER_MAP.get(session);
         	removeUserFromRoom(user);
         	Room room = new Room();
         	room.getUsers().add(user);
+        	room.setRoomName(jo.getString("name"));
+        	ROOMID_ROOM_MAP.put(room.getId(), room);
         	user.setRoomId(room.getId());
+        	Msg msg = new Msg();
+        	msg.success("rooms", "", getAllRooms(user));
+			sendMessage(session, JSONObject.fromObject(msg).toString());
         }else if(type.equals("chat")){//聊天
         	User user = SESSION_USER_MAP.get(session);
         	String roomId = user.getRoomId();
         	if(roomId==null){//
-        		System.out.println("请先选择房间！");
+        		Msg msg = new Msg();
+            	msg.fail("error", "该房间不存在！");
+    			sendMessage(session, JSONObject.fromObject(msg).toString());
+        	}else{
+        		String msgStr = jo.getString("msg");
+        		Map resMap = new HashMap();
+        		resMap.put("from", user.getName());
+        		resMap.put("msg", msgStr);
+        		Msg msg = new Msg();
+            	msg.success("chat", "", resMap);
+            	msgStr = JSONObject.fromObject(msg).toString();
+        		List<User> users = ROOMID_ROOM_MAP.get(roomId).getUsers();
+        		for(User tempUser : users){
+//        			if(tempUser.equals(users)){
+//        				sendMessage(session, msgStr);
+//        			}
+        			sendMessage(session, msgStr);
+        		}
         	}
         }else if(type.equals("outRoom")){//
         	User user = SESSION_USER_MAP.get(session);
@@ -143,9 +216,15 @@ public class MyWebSocket1 {
      * @param message
      * @throws IOException
      */
-    public void sendMessage(String message) throws IOException{
-        this.session.getBasicRemote().sendText(message);
-        //this.session.getAsyncRemote().sendText(message);
+    public void sendMessage(Session session, String message){
+        try {
+        	if(session.isOpen()){
+        		System.out.println("返回消息=" + message);
+        		session.getBasicRemote().sendText(message);
+        	}
+		} catch (IOException e) {
+			this.log.error("sendMessage",e);
+		}
     }
  
     public static synchronized int getOnlineCount() {
@@ -168,5 +247,31 @@ public class MyWebSocket1 {
     			tempRoom.getUsers().remove(user);
     		}
     	}
+    }
+    private List getAllRooms(User user){
+    	List res = new ArrayList();
+    	Map oneRoomMap;
+    	for(Room oneR: ROOMID_ROOM_MAP.values()){
+    		oneRoomMap = new HashMap();
+    		oneRoomMap.put("id", oneR.getId());
+    		oneRoomMap.put("name", oneR.getRoomName());
+    		if(user.getRoomId()!=null && user.getRoomId().equals(oneR.getId())){//用户在该房间是1
+    			oneRoomMap.put("ifin", 1);
+    		}else{
+    			oneRoomMap.put("ifin", 0);
+    		}
+    		res.add(oneRoomMap);
+    	}
+    	return res;
+    }
+    private List getARoomUsers(Room room){
+    	List res = new ArrayList();
+    	Map oneUser;
+    	for(User user: room.getUsers()){
+    		oneUser = new HashMap();
+    		oneUser.put("name", user.getName());
+    		res.add(oneUser);
+    	}
+    	return res;
     }
 }
