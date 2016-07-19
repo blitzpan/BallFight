@@ -28,6 +28,7 @@ public class StartListener implements ServletContextListener {
      * @see ServletContextListener#contextInitialized(ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent arg0)  { 
+    	/*
     	//初始化线程
 		InitThread it = new InitThread();
 //		System.out.println(Area.balls);
@@ -49,6 +50,7 @@ public class StartListener implements ServletContextListener {
 		Area.balls.add(Ball.initPlayer());
 		Area.balls.add(Ball.initPlayer());
 		Area.balls.add(Ball.initPlayer());
+		*/
     }
 
 	/**
