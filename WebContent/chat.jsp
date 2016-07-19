@@ -2,6 +2,7 @@
 <%
 String path = request.getContextPath();
 String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+String socketPath = request.getServerName()+":"+request.getServerPort()+path+"/";
 String sessionId = request.getSession().getId();
 %>
 <!DOCTYPE HTML>
@@ -44,8 +45,6 @@ function setNickName(){
 			msg['type'] = 'setNickName';
 			msg['nickName'] = r;
 			ws.sendMsg(msg);
-		}else{
-			setNickName();
 		}
 	});
 }
@@ -72,6 +71,11 @@ var chat={
 			}
 		});
 	},
+	refreshRoom:function(){
+		var msg = {};
+		msg['type'] = 'refreshRoom';
+		ws.sendMsg(msg);
+	},
 	inRoom:function(id){
 		chat.roomId=id;
 		var msg = {};
@@ -85,10 +89,12 @@ var chat={
 		if(msg.type=='refreshUser'){
 			chat.nickName = msg.obj.userName;
 			if(msg.obj.roomId!=null && msg.obj.roomId!=''){
-				$("#nickName").html(msg.obj.userName + " in " + msg.obj.roomId.substring(0,4));
 				chat.roomId = msg.obj.roomId;
-			}else{
+			}
+			if(msg.obj.userName!=null && msg.obj.userName !=''){
 				$("#nickName").html(msg.obj.userName);
+			}else{
+				$("#nickName").html("昵称");
 			}
 		}else if(msg.type=='setNickName'){
 			setNickName();
@@ -96,6 +102,10 @@ var chat={
 			$('#roomDg').datagrid('loadData',msg.obj);
 		}else if(msg.type=='refreshFriends'){
 			$('#friendsDg').datagrid('loadData',msg.obj);
+		}else if(msg.type=='chat'){
+			showMsg(msg.obj.from, msg.obj.msg);
+		}else if(msg.type=='error'){
+			showMsg(msg.obj.from, msg.obj.msg);
 		}
 	}
 }
@@ -104,7 +114,7 @@ var ws={
 	init:function(){
 		//判断当前浏览器是否支持WebSocket
 		if('WebSocket' in window){
-			ws.websocket = new WebSocket("ws://127.0.0.1:8080/ball/websocket1");
+			ws.websocket = new WebSocket("ws://<%=socketPath%>websocket1");
 		} else {
 			alert('您的浏览器版本太老，建议使用谷歌浏览器！');
 			window.close();
@@ -115,7 +125,7 @@ var ws={
 		};
 		//连接成功建立的回调方法
 		ws.websocket.onopen = function(event){
-			showMsg("系统", "数据加载完成！");
+			showMsg("系统", "东风-41洲际导弹准备完毕，随时准备发射！");
 			chat.login();
 		}
 		//接收到消息的回调方法
@@ -159,6 +169,10 @@ function send(){
 		alert("请先创建或者进入一个房间！");
 		return;
 	}
+	if(chat.nickName==null || chat.nickName == ''){
+		alert('请点击昵称新建昵称！');
+		return ;
+	}
 	showMsg(chat.nickName,str,true);
 	
 	var msg = {};
@@ -171,6 +185,7 @@ function send(){
 <body class="easyui-layout">
 	<div data-options="region:'west'" style="width:200px;padding:5px;background:#eee;">
 		<a id="mkRoom" href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.mkRoom()">创建房间</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.refreshRoom()">刷新</a>
 		<table id="roomDg" class="easyui-datagrid" data-options="singleSelect:true">
 		<thead>
 	        <tr>
@@ -195,7 +210,7 @@ function send(){
 		    	<table id="friendsDg" class="easyui-datagrid" data-options="singleSelect:true">
 				<thead>
 			        <tr>
-			            <th data-options="field:'name',width:'100%'">名称</th>
+			            <th data-options="field:'name',width:'100%'">好友</th>
 			        </tr>
 		    	</thead>
 				</table>
@@ -203,17 +218,9 @@ function send(){
 		    <div data-options="region:'south',title:' ',collapsible:true" style="height:500px;">
 		    	<div class="easyui-layout" data-options="fit:true">
 		    		<div data-options="region:'north'" style="padding:5px;height:50px;background:#eee;">
-				    	<span id="nickName" style="font:bold 25px/37px 黑体;" onclick='setNickName();'></span>
+				    	<span id="nickName" style="font:bold 25px/37px 黑体;" onclick='setNickName();'>昵称</span>
 				    </div>
 				    <div id="msg_chat" data-options="region:'center'" style="padding:5px;background:#eee;">
-				    	<div class="chat_item">
-				    		<div class="userName">张三</div>
-				    		<div>来自火星的问候</div>
-				    	</div>
-				    	<div class="chat_item_r">
-				    		<div class="userName">李四</div>
-				    		<div>吃屎吧火星</div>
-				    	</div>
 				    </div>
 				    <div data-options="region:'south'" style="height:100px">
 				    	<div class="easyui-panel" data-options="fit:'true',footer:'#ft'">

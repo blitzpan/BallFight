@@ -85,15 +85,11 @@ public class MyWebSocket1 {
         		SESSION_USER_MAP.remove(user.getSession());
         		user.setSession(session);
         		SESSION_USER_MAP.put(session, user);
-        		Msg msg = new Msg();
-        		Map userMap = new HashMap();
-        		userMap.put("userName", user.getName());
-        		userMap.put("roomId", user.getRoomId());
-        		msg.success("refreshUser","", userMap);
-				sendMessage(session, JSONObject.fromObject(msg).toString());
-				msg = new Msg();
-            	msg.success("rooms", "", getAllRooms(user));
-				sendMessage(session, JSONObject.fromObject(msg).toString());
+        		//返回用户信息
+        		returnUserInfo(session, user);
+				//返回房间信息
+        		returnRooms(session, user);
+        		returnCurUserFriends(user);
         	}else{//用户没有登陆
         		user = new User();
             	user.setSessionId(sessionId);
@@ -103,42 +99,28 @@ public class MyWebSocket1 {
             	Msg msg = new Msg();
             	msg.success("setNickName","请设置昵称！",null);
 				sendMessage(session, JSONObject.fromObject(msg).toString());
-				msg = new Msg();
-            	msg.success("rooms", "", getAllRooms(user));
-				sendMessage(session, JSONObject.fromObject(msg).toString());
+				//返回房间信息
+        		returnRooms(session, user);
         	}
         }else if(type.equals("setNickName")){//
         	User user = SESSION_USER_MAP.get(session);
         	user.setName(jo.getString("nickName"));
-    		Msg msg = new Msg();
-    		Map userMap = new HashMap();
-    		userMap.put("userName", user.getName());
-    		userMap.put("roomId", user.getRoomId());
-    		msg.success("refreshUser","", userMap);
-			sendMessage(session, JSONObject.fromObject(msg).toString());
+        	//返回用户信息
+    		returnUserInfo(session, user);
         }else if(type.equals("inRoom")){//进入一个房间
         	String roomId = jo.getString("roomId");
         	Room room = ROOMID_ROOM_MAP.get(roomId);
         	if(room!=null){
         		User user = SESSION_USER_MAP.get(session);
+        		String oldRoomId = user.getRoomId();
         		removeUserFromRoom(user);
             	user.setRoomId(roomId);
             	room.getUsers().add(user);
-            	Msg msg = new Msg();
-            	msg.success("refreshFriends", "", getARoomUsers(room));
-            	String refreshFriends = JSONObject.fromObject(msg).toString();
-    			sendMessage(session, refreshFriends);
-    			
-    			msg = new Msg();
-            	msg.success("rooms", "", getAllRooms(user));
-				sendMessage(session, JSONObject.fromObject(msg).toString());
-				
-				List<User> users = room.getUsers();
-        		for(User tempUser : users){
-        			if(!tempUser.equals(users)){
-        				sendMessage(session, refreshFriends);
-        			}
-        		}
+            	//返回房间信息
+        		returnRooms(session, user);
+        		//刷新老房间和新房间的所有用户的好友列表
+        		refreshRoomUsers(oldRoomId);
+        		refreshRoomUsers(roomId);
         	}else{
         		Msg msg = new Msg();
             	msg.fail("error", "该房间不存在！");
@@ -152,9 +134,9 @@ public class MyWebSocket1 {
         	room.setRoomName(jo.getString("name"));
         	ROOMID_ROOM_MAP.put(room.getId(), room);
         	user.setRoomId(room.getId());
-        	Msg msg = new Msg();
-        	msg.success("rooms", "", getAllRooms(user));
-			sendMessage(session, JSONObject.fromObject(msg).toString());
+        	this.returnRooms(session, user);
+        	this.returnUserInfo(session, user);
+        	this.returnCurUserFriends(user);
         }else if(type.equals("chat")){//聊天
         	User user = SESSION_USER_MAP.get(session);
         	String roomId = user.getRoomId();
@@ -186,18 +168,10 @@ public class MyWebSocket1 {
         	this.removeUserFromRoom(user);
         	SESSIONID_USER_MAP.remove(user.getSessionId());
         	SESSION_USER_MAP.remove(session);
+        }else if(type.equals("refreshRoom")){
+        	User user = SESSION_USER_MAP.get(session);
+        	returnRooms(session, user);
         }
-        /*
-        //群发消息
-        for(MyWebSocket1 item: webSocketSet){             
-            try {
-                item.sendMessage(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-                continue;
-            }
-        }
-        */
     }
      
     /**
@@ -273,5 +247,81 @@ public class MyWebSocket1 {
     		res.add(oneUser);
     	}
     	return res;
+    }
+    /**
+     * @Description:返回当前用户信息 
+     * @param @param session
+     * @param @param user   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月19日
+     */
+    private void returnUserInfo(Session session, User user){
+    	Msg msg = new Msg();
+		Map userMap = new HashMap();
+		userMap.put("userName", user.getName());
+		userMap.put("roomId", user.getRoomId());
+		msg.success("refreshUser","", userMap);
+		sendMessage(session, JSONObject.fromObject(msg).toString());
+    }
+    /**
+     * @Description:刷新当前用户的好友列表 
+     * @param @param user   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月19日
+     */
+    private void returnCurUserFriends(User user){
+    	String roomId = user.getRoomId();
+    	if(roomId==null){
+    		return;
+    	}
+    	Room room = ROOMID_ROOM_MAP.get(roomId);
+		if(room == null){
+			return;
+		}
+    	Msg msg = new Msg();
+		msg.success("refreshFriends","", getARoomUsers(room));
+		sendMessage(user.getSession(), JSONObject.fromObject(msg).toString());
+    }
+    /**
+     * @Description:返回所有房间信息 
+     * @param @param session
+     * @param @param user   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月19日
+     */
+    private void returnRooms(Session session, User user){
+    	Msg msg = new Msg();
+    	msg.success("rooms", "", getAllRooms(user));
+		sendMessage(session, JSONObject.fromObject(msg).toString());
+    }
+    /**
+     * @Description:刷新这个房间的所有用户的好友列表 
+     * @param @param roomId   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月19日
+     */
+    private void refreshRoomUsers(String roomId){
+    	if(roomId==null || roomId.length()<1){
+    		return;
+    	}
+    	Room room = ROOMID_ROOM_MAP.get(roomId);
+    	if(room==null){
+    		return;
+    	}
+    	Msg msg = new Msg();
+    	msg.success("refreshFriends", "", getARoomUsers(room));
+    	String refreshFriends = JSONObject.fromObject(msg).toString();
+		List<User> users = room.getUsers();
+		for(User tempUser : users){
+			sendMessage(tempUser.getSession(), refreshFriends);
+		}
     }
 }
