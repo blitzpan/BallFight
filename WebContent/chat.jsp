@@ -15,6 +15,25 @@ String sessionId = request.getSession().getId();
 	<script type="text/javascript" src="js/jquery-easyui-1.4.3/locale/easyui-lang-zh_CN.js"></script>
 	<script type="text/javascript" src="js/json2.js"></script>
 </head>
+<style>
+.chat_item{
+	border-bottom:thin solid #D4D4D4;
+	padding:5px;
+}
+.chat_item > .userName{
+	font:bold 15px/15px black;
+	padding-bottom:5px;
+}
+.chat_item_r{
+	border-bottom:thin solid #D4D4D4;
+	padding:5px;
+}
+.chat_item_r > .userName{
+	font:bold 15px/15px black;
+	padding-bottom:5px;
+	text-align:right;
+}
+</style>
 <script>
 function setNickName(){
 	$.messager.prompt('提示', '输入昵称:', function(r){
@@ -64,7 +83,13 @@ var chat={
 		msg = JSON.parse(msg);
 		console.log(msg.type);
 		if(msg.type=='refreshUser'){
-			$("#nickName").html(msg.obj.userName);
+			chat.nickName = msg.obj.userName;
+			if(msg.obj.roomId!=null && msg.obj.roomId!=''){
+				$("#nickName").html(msg.obj.userName + " in " + msg.obj.roomId.substring(0,4));
+				chat.roomId = msg.obj.roomId;
+			}else{
+				$("#nickName").html(msg.obj.userName);
+			}
 		}else if(msg.type=='setNickName'){
 			setNickName();
 		}else if(msg.type=='rooms'){
@@ -86,21 +111,20 @@ var ws={
 		}
 		//连接发生错误的回调方法
 		ws.websocket.onerror = function(){
-			setMessageInnerHTML("error");
+			showMsg("系统", "连接服务器出现异常！");
 		};
 		//连接成功建立的回调方法
 		ws.websocket.onopen = function(event){
-			setMessageInnerHTML("open");
+			showMsg("系统", "数据加载完成！");
 			chat.login();
 		}
 		//接收到消息的回调方法
 		ws.websocket.onmessage = function(event){
-			setMessageInnerHTML(event.data);
 			chat.operMsg(event.data);
 		}
 		//连接关闭的回调方法
 		ws.websocket.onclose = function(){
-			setMessageInnerHTML("close");
+			showMsg("系统", "与服务器连接断开！");
 		}
 		//监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
 		window.onbeforeunload = function(){
@@ -108,13 +132,16 @@ var ws={
 		}
 	},
 	sendMsg:function(msg){
-		console.log(msg);
 		ws.websocket.send(JSON.stringify(msg));
 	}
 }
 //将消息显示在网页上
-function setMessageInnerHTML(msg){
-	$("#msg_chat").append(msg+"<br/><hr/>");
+function showMsg(name, msg, send){
+	if(send==true){
+		$("#msg_chat").append("<div class='chat_item_r'><div class='userName'>"+name+"</div><div>"+msg+"</div></div>");
+	}else{
+		$("#msg_chat").append("<div class='chat_item'><div class='userName'>"+name+"</div><div>"+msg+"</div></div>");
+	}
 }
 function formatRoomOper(value,row,index){
 	if(value=='1'){
@@ -128,10 +155,17 @@ function send(){
 	if(str==''){
 		return;
 	}
+	if(chat.roomId==null){
+		alert("请先创建或者进入一个房间！");
+		return;
+	}
+	showMsg(chat.nickName,str,true);
+	
 	var msg = {};
 	msg['type'] = 'chat';
 	msg['msg'] = str;
 	ws.sendMsg(msg);
+	$("#sed_msg").textbox("setValue","");
 }
 </script>
 <body class="easyui-layout">
@@ -166,13 +200,20 @@ function send(){
 		    	</thead>
 				</table>
 		    </div>
-		    <div data-options="region:'south',title:' ',collapsible:true" style="height:600px;">
+		    <div data-options="region:'south',title:' ',collapsible:true" style="height:500px;">
 		    	<div class="easyui-layout" data-options="fit:true">
 		    		<div data-options="region:'north'" style="padding:5px;height:50px;background:#eee;">
 				    	<span id="nickName" style="font:bold 25px/37px 黑体;" onclick='setNickName();'></span>
 				    </div>
 				    <div id="msg_chat" data-options="region:'center'" style="padding:5px;background:#eee;">
-				    	123
+				    	<div class="chat_item">
+				    		<div class="userName">张三</div>
+				    		<div>来自火星的问候</div>
+				    	</div>
+				    	<div class="chat_item_r">
+				    		<div class="userName">李四</div>
+				    		<div>吃屎吧火星</div>
+				    	</div>
 				    </div>
 				    <div data-options="region:'south'" style="height:100px">
 				    	<div class="easyui-panel" data-options="fit:'true',footer:'#ft'">

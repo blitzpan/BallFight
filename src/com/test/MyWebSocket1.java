@@ -76,7 +76,6 @@ public class MyWebSocket1 {
     @OnMessage
     public void onMessage(String message, Session session) {
     	System.out.println("收到消息=" + message);
-    	System.out.println("session"+session);
     	JSONObject jo = JSONObject.fromObject(message);
     	String type = jo.getString("type");
     	if(type.equals("login")){
@@ -89,6 +88,7 @@ public class MyWebSocket1 {
         		Msg msg = new Msg();
         		Map userMap = new HashMap();
         		userMap.put("userName", user.getName());
+        		userMap.put("roomId", user.getRoomId());
         		msg.success("refreshUser","", userMap);
 				sendMessage(session, JSONObject.fromObject(msg).toString());
 				msg = new Msg();
@@ -113,6 +113,7 @@ public class MyWebSocket1 {
     		Msg msg = new Msg();
     		Map userMap = new HashMap();
     		userMap.put("userName", user.getName());
+    		userMap.put("roomId", user.getRoomId());
     		msg.success("refreshUser","", userMap);
 			sendMessage(session, JSONObject.fromObject(msg).toString());
         }else if(type.equals("inRoom")){//进入一个房间
@@ -171,10 +172,9 @@ public class MyWebSocket1 {
             	msgStr = JSONObject.fromObject(msg).toString();
         		List<User> users = ROOMID_ROOM_MAP.get(roomId).getUsers();
         		for(User tempUser : users){
-//        			if(tempUser.equals(users)){
-//        				sendMessage(session, msgStr);
-//        			}
-        			sendMessage(session, msgStr);
+        			if(!tempUser.equals(user)){
+        				sendMessage(tempUser.getSession(), msgStr);
+        			}
         		}
         	}
         }else if(type.equals("outRoom")){//
