@@ -202,9 +202,11 @@ function send(){
 //游戏js
 var game={
 	isBegin:false,
+	ifCanClick:true,
 	WIDTH:500,
 	HEIGHT:500,
 	MAX_SPEED:1.8,
+	ball:null,
 	x:0,
 	y:0,
 	xs:0,
@@ -219,12 +221,15 @@ var game={
 		game.ctx.fillStyle='#FFF';
 		game.ctx.fillRect(0,0,game.WIDTH,game.HEIGHT);
 		game.canvas.onclick=function(e){//给canvas添加点击事件
+			if(!game.ifCanClick){
+				return;
+			}
 		    e=e||event;//获取事件对象
 		    //获取事件在canvas中发生的位置
 		    var offset = $("#gameArea").offset();
 		    var cx=e.clientX-offset.left;
 		    var cy=e.clientY-offset.top;
-		    console.log(cx +" - "+ cy);
+		    //console.log(cx +" - "+ cy);
 		    if(!game.isBegin){
 		    	game.x = cx;
 		    	game.y = cy;
@@ -233,6 +238,9 @@ var game={
 		    	var len3 = Math.sqrt(Math.pow(cx-game.x,2) + Math.pow(cy-game.y,2));
 			    game.xs = (cx-game.x)/len3 * game.MAX_SPEED;
 			    game.ys = (cy-game.y)/len3 * game.MAX_SPEED;
+			    game.ifCanClick=false;
+			    window.setTimeout("game.ifCanClick=true", 500);
+			    console.log("改变方向=" + cx + "-" + cy);
 		    }
 		}
 	},
@@ -242,6 +250,7 @@ var game={
 			return;
 		}
 		game.isBegin=true;
+		game.ifCanClick = true;
 		window.setInterval(game.repaint,40);
 		window.setInterval(function(){game.move(game)},40);
 	},
