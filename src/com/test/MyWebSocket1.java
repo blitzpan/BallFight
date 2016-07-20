@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.websocket.OnClose;
@@ -20,6 +18,7 @@ import org.apache.log4j.Logger;
 import com.ballFight.bean.Msg;
 import com.ballFight.bean.Room;
 import com.ballFight.bean.User;
+import com.ballFight.bean.WebSocketConstant;
 
 import net.sf.json.JSONObject;
  
@@ -34,14 +33,7 @@ public class MyWebSocket1 {
     //与某个客户端的连接会话，需要通过它来给客户端发送数据
     private Session session;
     
-    //websocket.session和user对应关系
-    private static ConcurrentHashMap<Session, User> SESSION_USER_MAP = new ConcurrentHashMap<Session, User>();
-    //httpsession.id和user对应关系
-    private static ConcurrentHashMap<String, User> SESSIONID_USER_MAP = new ConcurrentHashMap<String, User>();
-    //roomid和room的对应关系
-    private static ConcurrentHashMap<String, Room> ROOMID_ROOM_MAP = new ConcurrentHashMap<String, Room>();
-    //延迟删除的一个list
-    private static ConcurrentLinkedQueue<Session> delayDelSessions = new ConcurrentLinkedQueue<Session>();
+
 
     /**
      * 连接建立成功调用的方法
@@ -64,8 +56,8 @@ public class MyWebSocket1 {
         subOnlineCount();           //在线数减1    
         System.out.println("有一连接关闭！当前在线人数为" + getOnlineCount());
         
-        delayDelSessions.add(this.session);
-        System.out.println("延迟删除queue.size=" + delayDelSessions.size());
+        WebSocketConstant.DELAY_DEL_SESSIONS.add(this.session);
+        System.out.println("延迟删除queue.size=" + WebSocketConstant.DELAY_DEL_SESSIONS.size());
     }
      
     /**
@@ -80,11 +72,11 @@ public class MyWebSocket1 {
     	String type = jo.getString("type");
     	if(type.equals("login")){
         	String sessionId = jo.getString("sessionId");
-        	User user = SESSIONID_USER_MAP.get(sessionId);
+        	User user = WebSocketConstant.SESSIONID_USER_MAP.get(sessionId);
         	if(user!=null){//用户已经登陆
-        		SESSION_USER_MAP.remove(user.getSession());
+        		WebSocketConstant.SESSION_USER_MAP.remove(user.getSession());
         		user.setSession(session);
-        		SESSION_USER_MAP.put(session, user);
+        		WebSocketConstant.SESSION_USER_MAP.put(session, user);
         		//返回用户信息
         		returnUserInfo(session, user);
 				//返回房间信息
@@ -94,8 +86,8 @@ public class MyWebSocket1 {
         		user = new User();
             	user.setSessionId(sessionId);
             	user.setSession(session);
-            	SESSION_USER_MAP.put(session, user);
-            	SESSIONID_USER_MAP.put(sessionId, user);
+            	WebSocketConstant.SESSION_USER_MAP.put(session, user);
+            	WebSocketConstant.SESSIONID_USER_MAP.put(sessionId, user);
             	Msg msg = new Msg();
             	msg.success("setNickName","请设置昵称！",null);
 				sendMessage(session, JSONObject.fromObject(msg).toString());
@@ -103,20 +95,21 @@ public class MyWebSocket1 {
         		returnRooms(session, user);
         	}
         }else if(type.equals("setNickName")){//
-        	User user = SESSION_USER_MAP.get(session);
+        	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	user.setName(jo.getString("nickName"));
         	//返回用户信息
     		returnUserInfo(session, user);
     		refreshRoomUsers(user.getRoomId());
         }else if(type.equals("inRoom")){//进入一个房间
         	String roomId = jo.getString("roomId");
-        	Room room = ROOMID_ROOM_MAP.get(roomId);
+        	Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId);
         	if(room!=null){
-        		User user = SESSION_USER_MAP.get(session);
+        		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         		String oldRoomId = user.getRoomId();
         		removeUserFromRoom(user);
             	user.setRoomId(roomId);
             	room.getUsers().add(user);
+            	room.refreshLastOperTime();
             	//返回房间信息
         		returnRooms(session, user);
         		//刷新老房间和新房间的所有用户的好友列表
@@ -128,18 +121,18 @@ public class MyWebSocket1 {
     			sendMessage(session, JSONObject.fromObject(msg).toString());
         	}
         }else if(type.equals("mkRoom")){//创建一个房间
-        	User user = SESSION_USER_MAP.get(session);
+        	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	removeUserFromRoom(user);
         	Room room = new Room();
         	room.getUsers().add(user);
         	room.setRoomName(jo.getString("name"));
-        	ROOMID_ROOM_MAP.put(room.getId(), room);
+        	WebSocketConstant.ROOMID_ROOM_MAP.put(room.getId(), room);
         	user.setRoomId(room.getId());
         	this.returnRooms(session, user);
         	this.returnUserInfo(session, user);
         	this.returnCurUserFriends(user);
         }else if(type.equals("chat")){//聊天
-        	User user = SESSION_USER_MAP.get(session);
+        	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	String roomId = user.getRoomId();
         	if(roomId==null){//
         		Msg msg = new Msg();
@@ -153,7 +146,7 @@ public class MyWebSocket1 {
         		Msg msg = new Msg();
             	msg.success("chat", "", resMap);
             	msgStr = JSONObject.fromObject(msg).toString();
-        		List<User> users = ROOMID_ROOM_MAP.get(roomId).getUsers();
+        		List<User> users = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId).getUsers();
         		for(User tempUser : users){
         			if(!tempUser.equals(user)){
         				sendMessage(tempUser.getSession(), msgStr);
@@ -161,16 +154,16 @@ public class MyWebSocket1 {
         		}
         	}
         }else if(type.equals("outRoom")){//
-        	User user = SESSION_USER_MAP.get(session);
+        	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	this.removeUserFromRoom(user);
         	user.setRoomId(null);
         }else if(type.equals("logout")){//
-        	User user = SESSION_USER_MAP.get(session);
+        	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	this.removeUserFromRoom(user);
-        	SESSIONID_USER_MAP.remove(user.getSessionId());
-        	SESSION_USER_MAP.remove(session);
+        	WebSocketConstant.SESSIONID_USER_MAP.remove(user.getSessionId());
+        	WebSocketConstant.SESSION_USER_MAP.remove(session);
         }else if(type.equals("refreshRoom")){
-        	User user = SESSION_USER_MAP.get(session);
+        	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	returnRooms(session, user);
         }
     }
@@ -217,7 +210,7 @@ public class MyWebSocket1 {
     private void removeUserFromRoom(User user) {
     	String tempRoomId = user.getRoomId();
     	if(tempRoomId!=null && tempRoomId.length()>0){
-    		Room tempRoom = ROOMID_ROOM_MAP.get(tempRoomId);
+    		Room tempRoom = WebSocketConstant.ROOMID_ROOM_MAP.get(tempRoomId);
     		if(tempRoom!=null){
     			tempRoom.getUsers().remove(user);
     		}
@@ -226,7 +219,7 @@ public class MyWebSocket1 {
     private List getAllRooms(User user){
     	List res = new ArrayList();
     	Map oneRoomMap;
-    	for(Room oneR: ROOMID_ROOM_MAP.values()){
+    	for(Room oneR: WebSocketConstant.ROOMID_ROOM_MAP.values()){
     		oneRoomMap = new HashMap();
     		oneRoomMap.put("id", oneR.getId());
     		oneRoomMap.put("name", oneR.getRoomName());
@@ -279,7 +272,7 @@ public class MyWebSocket1 {
     	if(roomId==null){
     		return;
     	}
-    	Room room = ROOMID_ROOM_MAP.get(roomId);
+    	Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId);
 		if(room == null){
 			return;
 		}
@@ -313,7 +306,7 @@ public class MyWebSocket1 {
     	if(roomId==null || roomId.length()<1){
     		return;
     	}
-    	Room room = ROOMID_ROOM_MAP.get(roomId);
+    	Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId);
     	if(room==null){
     		return;
     	}

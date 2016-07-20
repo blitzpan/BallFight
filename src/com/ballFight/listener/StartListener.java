@@ -4,11 +4,8 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import com.ballFight.bean.Area;
-import com.ballFight.bean.Ball;
-import com.ballFight.thread.EatThread;
-import com.ballFight.thread.InitThread;
-import com.ballFight.thread.MoveThread;
+import com.ballFight.thread.DelRoomThread;
+import com.ballFight.thread.DelayDelThread;
 
 /**
  * Application Lifecycle Listener implementation class StartListener
@@ -28,6 +25,10 @@ public class StartListener implements ServletContextListener {
      * @see ServletContextListener#contextInitialized(ServletContextEvent)
      */
     public void contextInitialized(ServletContextEvent arg0)  { 
+    	DelayDelThread ddt = new DelayDelThread();
+    	ddt.start();
+    	DelRoomThread drt = new DelRoomThread();
+    	drt.start();
     	/*
     	//初始化线程
 		InitThread it = new InitThread();

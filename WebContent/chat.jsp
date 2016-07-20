@@ -182,13 +182,13 @@ function send(){
 	if(str==''){
 		return;
 	}
-	if(chat.roomId==null){
-		alert("请先创建或者进入一个房间！");
-		return;
-	}
 	if(chat.nickName==null || chat.nickName == ''){
 		alert('请点击昵称新建昵称！');
 		return ;
+	}
+	if(chat.roomId==null){
+		alert("请先创建或者进入一个房间！");
+		return;
 	}
 	showMsg(chat.nickName,str,true);
 	
