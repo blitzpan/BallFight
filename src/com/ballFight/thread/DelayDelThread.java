@@ -12,6 +12,8 @@ import com.ballFight.bean.WebSocketConstant;
 
 public class DelayDelThread extends Thread{
 	private Logger log = Logger.getLogger(getClass());
+	private static long nullSleep = 300;//5分钟
+	private static long delSleep = 2*60;//2分钟
 	@Override
 	public void run() {
 		Session session;
@@ -21,10 +23,13 @@ public class DelayDelThread extends Thread{
 		Room room;
 		while(true){
 			try{
+				log.info("汇总数据：\nSESSION_USER_MAP.size=" + WebSocketConstant.SESSION_USER_MAP.size()
+					+"\nSESSIONID_USER_MAP.size=" + WebSocketConstant.SESSIONID_USER_MAP.size()
+					+"\nROOMID_ROOM_MAP.size=" + WebSocketConstant.ROOMID_ROOM_MAP.size()
+					+"\nDELAY_DEL_SESSIONS.size=" + WebSocketConstant.DELAY_DEL_SESSIONS.size());
 				session = WebSocketConstant.DELAY_DEL_SESSIONS.poll();
-				log.info("延迟删除队列.size="+WebSocketConstant.DELAY_DEL_SESSIONS.size());
 				if(session == null){
-					TimeUnit.SECONDS.sleep(300);
+					TimeUnit.SECONDS.sleep(nullSleep);
 					continue;
 				}
 				user = WebSocketConstant.SESSION_USER_MAP.get(session);
@@ -44,7 +49,7 @@ public class DelayDelThread extends Thread{
 					room.getUsers().remove(user);
 				}
 				WebSocketConstant.SESSION_USER_MAP.remove(session);
-				TimeUnit.SECONDS.sleep(60);
+				TimeUnit.SECONDS.sleep(delSleep);
 			}catch(Exception e){
 				log.error("", e);
 			}

@@ -16,6 +16,8 @@ import com.ballFight.bean.WebSocketConstant;
 public class DelRoomThread extends Thread{
 	private Logger log = Logger.getLogger(WebSocketConstant.class);
 	private long sleepTime = 5*60;//5分钟
+    //超过该房间无访问则删除
+    public static long delRoomTime = 5*60*1000;//5分钟
 	@Override
 	public void run() {
 		Room room;
@@ -30,7 +32,7 @@ public class DelRoomThread extends Thread{
 					if(room==null){
 						continue;
 					}
-					if(room.getUserCount()==0 && (curDate-room.getLastOperTime()>WebSocketConstant.delRoomTime) ){
+					if(room.getUserCount()==0 && (curDate-room.getLastOperTime() > delRoomTime) ){
 						WebSocketConstant.ROOMID_ROOM_MAP.remove(roomId);
 						c++;
 					}

@@ -14,6 +14,4 @@ public class WebSocketConstant {
     public static ConcurrentHashMap<String, Room> ROOMID_ROOM_MAP = new ConcurrentHashMap<String, Room>();
     //延迟删除的一个list
     public static ConcurrentLinkedQueue<Session> DELAY_DEL_SESSIONS = new ConcurrentLinkedQueue<Session>();
-    //超过该房间无访问则删除
-    public static long delRoomTime = 5*60*1000;//5分钟
 }
