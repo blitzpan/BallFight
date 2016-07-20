@@ -36,6 +36,9 @@ String sessionId = request.getSession().getId();
 }
 </style>
 <script>
+function test(){
+	
+}
 function setNickName(){
 	$.messager.prompt('提示', '输入昵称:', function(r){
 		if (r){
@@ -152,6 +155,20 @@ function showMsg(name, msg, send){
 	}else{
 		$("#msg_chat").append("<div class='chat_item'><div class='userName'>"+name+"</div><div>"+msg+"</div></div>");
 	}
+	chatMsgScroll();
+}
+function chatMsgScroll(){
+	var con = $("#msg_chat");
+    var scrollTo = $("#msg_chat>div:last");
+    var scrollHeight=0;
+    if(scrollTo.offset().top < (con.offset().top + con.outerHeight(true))){
+    	scrollHeight = 0;
+    }else{
+    	scrollHeight = scrollTo.offset().top - con.offset().top - con.outerHeight(true) + scrollTo.outerHeight(true) + con.scrollTop();
+    }
+    if(scrollHeight>0){
+    	con.animate({scrollTop:scrollHeight},1000);
+    }
 }
 function formatRoomOper(value,row,index){
 	if(value=='1'){
@@ -193,14 +210,6 @@ function send(){
 	            <th data-options="field:'ifin',width:'30%',align:'center',formatter:formatRoomOper ">操作</th>
 	        </tr>
     	</thead>
-		<tbody>
-			<tr>
-				<td>测试aaaa</td>
-				<td>
-					<a href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.mkRoom()">进入</a>
-				</td>
-			</tr>
-		</tbody>
 		</table>
 	</div>
 	<div data-options="region:'center'," style="padding:5px;background:#eee;"></div>

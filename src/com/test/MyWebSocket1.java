@@ -107,6 +107,7 @@ public class MyWebSocket1 {
         	user.setName(jo.getString("nickName"));
         	//返回用户信息
     		returnUserInfo(session, user);
+    		refreshRoomUsers(user.getRoomId());
         }else if(type.equals("inRoom")){//进入一个房间
         	String roomId = jo.getString("roomId");
         	Room room = ROOMID_ROOM_MAP.get(roomId);
