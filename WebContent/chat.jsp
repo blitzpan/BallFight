@@ -52,7 +52,8 @@ function setNickName(){
 	});
 }
 $(function(){
-	ws.init();
+	//ws.init();
+	game.init();
 });
 var chat={
 	sessionId:'<%=sessionId %>',
@@ -198,11 +199,97 @@ function send(){
 	ws.sendMsg(msg);
 	$("#sed_msg").textbox("setValue","");
 }
+//游戏js
+var game={
+	isBegin:false,
+	WIDTH:500,
+	HEIGHT:500,
+	MAX_SPEED:1.8,
+	x:0,
+	y:0,
+	xs:0,
+	ys:0,
+	canvas:null,
+	ctx:null,
+	canvasCache:null,
+	ctxCache:null,
+	init:function(){
+		game.canvas=document.getElementById('gameArea');
+		game.ctx=game.canvas.getContext('2d');
+		game.ctx.fillStyle='#FFF';
+		game.ctx.fillRect(0,0,game.WIDTH,game.HEIGHT);
+		game.canvas.onclick=function(e){//给canvas添加点击事件
+		    e=e||event;//获取事件对象
+		    //获取事件在canvas中发生的位置
+		    var offset = $("#gameArea").offset();
+		    var cx=e.clientX-offset.left;
+		    var cy=e.clientY-offset.top;
+		    console.log(cx +" - "+ cy);
+		    if(!game.isBegin){
+		    	game.x = cx;
+		    	game.y = cy;
+		    	game.repaint();
+		    }else{
+		    	var len3 = Math.sqrt(Math.pow(cx-game.x,2) + Math.pow(cy-game.y,2));
+			    game.xs = (cx-game.x)/len3 * game.MAX_SPEED;
+			    game.ys = (cy-game.y)/len3 * game.MAX_SPEED;
+		    }
+		}
+	},
+	beginGame:function(){
+		if(game.x==0 && game.y==0){
+			alert("请先点击设置初始位置。");
+			return;
+		}
+		game.isBegin=true;
+		window.setInterval(game.repaint,40);
+		window.setInterval(function(){game.move(game)},40);
+	},
+	repaintBack:function(){
+		game.ctxCache.fillStyle='#FFF';
+		game.ctxCache.fillRect(0,0,game.WIDTH,game.HEIGHT);
+	},
+	drawABall:function(x,y,radius,color){
+		game.ctxCache.fillStyle=color;
+		game.ctxCache.beginPath();
+		game.ctxCache.arc(x,y,radius,0,Math.PI*2,true);
+		game.ctxCache.closePath();
+		game.ctxCache.fill();
+	},
+	repaint:function(){
+		game.canvasCache = document.createElement('canvas');
+		game.canvasCache.width=game.WIDTH;
+		game.canvasCache.height=game.HEIGHT;
+		game.ctxCache = game.canvasCache.getContext('2d');
+		game.repaintBack();
+		game.drawABall(game.x,game.y,10,'black');
+		game.ctx.drawImage(game.canvasCache, 0, 0);
+	},
+	move:function(obj){
+		obj.x = obj.x+obj.xs;
+		obj.y = obj.y + obj.ys;
+		if(obj.x<0){
+			obj.xs = obj.xs*-1;
+			obj.x=0;
+		}else if(obj.x>game.WIDTH){
+			obj.xs = obj.xs*-1;
+			obj.x=game.WIDTH;
+		}
+		if(obj.y<0){
+			obj.ys = obj.ys*-1;
+			obj.y=0
+		}else if(obj.y>game.HEIGHT){
+			obj.ys = obj.ys*-1;
+			obj.y=game.HEIGHT;
+		}
+	}
+}
 </script>
 <body class="easyui-layout">
 	<div data-options="region:'west'" style="width:200px;padding:5px;background:#eee;">
 		<a id="mkRoom" href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.mkRoom()">创建房间</a>
 		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.refreshRoom()">刷新</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="game.beginGame()">开始</a>
 		<table id="roomDg" class="easyui-datagrid" data-options="singleSelect:true">
 		<thead>
 	        <tr>
@@ -212,7 +299,9 @@ function send(){
     	</thead>
 		</table>
 	</div>
-	<div data-options="region:'center'," style="padding:5px;background:#eee;"></div>
+	<div data-options="region:'center'," style="padding:5px;background:#eee;">
+		<canvas id="gameArea" height="500" width="500"></canvas>
+	</div>
 	<div data-options="region:'east'" style="width:300px;">
 		<div class="easyui-layout" data-options="fit:true">
 		    <div data-options="region:'center'" style="padding:5px;background:#eee;">
