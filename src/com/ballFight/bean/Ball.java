@@ -1,5 +1,7 @@
 package com.ballFight.bean;
 
+import java.util.UUID;
+
 import net.sf.json.JSONObject;
 
 public class Ball {
@@ -17,6 +19,15 @@ public class Ball {
 		b.x = Area.RANDOM.nextInt(Area.WIDTH);
 		b.y = Area.RANDOM.nextInt(Area.HEIGHT);
 		b.radius = Area.RANDOM.nextInt(BallConstant.FOOD_MAX_RADIUS);
+		return b;
+	}
+	public static Ball initAFood(){
+		Ball b = new Ball();
+		b.setId(UUID.randomUUID().toString());
+		b.type = BallConstant.BALL_TYPE_FOOD;
+		b.x = Area.RANDOM.nextInt(Area.WIDTH);
+		b.y = Area.RANDOM.nextInt(Area.HEIGHT);
+		b.radius = Area.getIntRandom(BallConstant.FOOD_MIN_RADIUS, BallConstant.FOOD_MAX_RADIUS);
 		return b;
 	}
 	public static Ball initPlayer(JSONObject jo){

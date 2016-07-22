@@ -11,4 +11,11 @@ public class Area {
 	public static int HEIGHT = 500;
 	public static Integer BALLCOUNT = 50;
 	public static List<Ball> balls = Collections.synchronizedList(new LinkedList());
+	public static int getIntRandom(int min, int max){
+		int i=-1000;
+		while(i<min){
+			i = RANDOM.nextInt(max);
+		}
+		return i;
+	}
 }

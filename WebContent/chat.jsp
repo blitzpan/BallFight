@@ -292,10 +292,23 @@ var game={
 	move:function(){
 		if(game.myBall!=null){
 			game.myBall.move();
-		}		
-		for(var tempBall of game.balls){
-			tempBall.move();
 		}
+		var eatIndex=[];
+		var eatBalls = [];
+		console.log(game.balls.length);
+		for(var i=0;i<game.balls.length; i++){
+			var tempBall = game.balls[i];
+			tempBall.move();
+			if(game.myBall!=null && game.myBall.ifEat(tempBall)){
+				eatIndex.push(i);
+			}
+		}
+		for(var i=0;i<eatIndex.length;i++){
+			eatBalls.push(game.balls[eatIndex[i]]);
+			game.balls.splice(eatIndex[i],1);
+		}
+		console.log(game.balls.length);
+		//校验被吃的消息
 	},
 	sendIntervalGameMsg:function(type){
 		if(!game.isBegin){
@@ -333,6 +346,13 @@ var game={
 			}
 			if(game.moveInterval==null){
 				game.moveInterval=window.setInterval(game.move,40);
+			}
+		}else if(msg.type=='game_add_foods'){
+			for(var i=0; i<msg.obj.length; i++){
+				game.balls.push(new Ball(msg.obj[i]));
+			}
+			if(game.repaintInterval==null){
+				game.repaintInterval=window.setInterval(game.repaint,40);
 			}
 		}
 	}

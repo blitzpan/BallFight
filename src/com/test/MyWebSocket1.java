@@ -68,7 +68,7 @@ public class MyWebSocket1 {
      */
     @OnMessage
     public void onMessage(String message, Session session) {
-    	System.out.println("收到消息=" + message);
+//    	System.out.println("收到消息=" + message);
     	JSONObject jo = JSONObject.fromObject(message);
     	String type = jo.getString("type");
     	if(type.equals("login")){
@@ -83,6 +83,12 @@ public class MyWebSocket1 {
 				//返回房间信息
         		returnRooms(session, user);
         		returnCurUserFriends(user);
+        		//返回食物信息
+        		String roomId = user.getRoomId();
+        		if(roomId!=null){
+        			Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId);
+        			returnFoods(session,room);
+        		}
         	}else{//用户没有登陆
         		user = new User();
         		user.setId(sessionId);
@@ -117,6 +123,8 @@ public class MyWebSocket1 {
         		//刷新老房间和新房间的所有用户的好友列表
         		refreshRoomUsers(oldRoomId);
         		refreshRoomUsers(roomId);
+        		//返回食物信息
+    			returnFoods(session,room);
         	}else{
         		Msg msg = new Msg();
             	msg.fail("error", "该房间不存在！");
@@ -128,11 +136,14 @@ public class MyWebSocket1 {
         	Room room = new Room();
         	room.getUsers().add(user);
         	room.setRoomName(jo.getString("name"));
+        	room.initFoods(0);
         	WebSocketConstant.ROOMID_ROOM_MAP.put(room.getId(), room);
         	user.setRoomId(room.getId());
         	this.returnRooms(session, user);
         	this.returnUserInfo(session, user);
         	this.returnCurUserFriends(user);
+        	//返回食物信息
+        	this.returnFoods(session, room);
         }else if(type.equals("chat")){//聊天
         	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	String roomId = user.getRoomId();
@@ -208,7 +219,7 @@ public class MyWebSocket1 {
     public void sendMessage(Session session, String message){
         try {
         	if(session.isOpen()){
-        		System.out.println("返回消息=" + message);
+//        		System.out.println("返回消息=" + message);
         		session.getBasicRemote().sendText(message);
         	}
 		} catch (IOException e) {
@@ -362,5 +373,19 @@ public class MyWebSocket1 {
     			sendMessage(tempUser.getSession(), refreshBall);
     		}
     	}
+    }
+    /**
+     * @Description:返回这个房间的食物 
+     * @param @param room   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月22日
+     */
+    private void returnFoods(Session session, Room room){
+    	Msg msg = new Msg();
+    	msg.success("game_add_foods", "", room.getFoods());
+    	String foods = JSONObject.fromObject(msg).toString();
+		sendMessage(session, foods);
     }
 }
