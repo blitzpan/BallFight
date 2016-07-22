@@ -1,7 +1,5 @@
 package com.ballFight.bean;
 
-import java.util.UUID;
-
 import javax.websocket.Session;
 
 public class User {
@@ -10,10 +8,7 @@ public class User {
 	private String sessionId;
 	private String roomId;
 	private Session session;
-	
-	public User() {
-		this.id = UUID.randomUUID().toString();
-	}
+	private Ball ball;
 	
 	public String getId() {
 		return id;
@@ -74,5 +69,13 @@ public class User {
 
 	public void setSession(Session session) {
 		this.session = session;
+	}
+
+	public Ball getBall() {
+		return ball;
+	}
+
+	public void setBall(Ball ball) {
+		this.ball = ball;
 	}
 }

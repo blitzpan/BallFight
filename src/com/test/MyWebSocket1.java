@@ -15,6 +15,7 @@ import javax.websocket.server.ServerEndpoint;
 
 import org.apache.log4j.Logger;
 
+import com.ballFight.bean.Ball;
 import com.ballFight.bean.Msg;
 import com.ballFight.bean.Room;
 import com.ballFight.bean.User;
@@ -84,6 +85,7 @@ public class MyWebSocket1 {
         		returnCurUserFriends(user);
         	}else{//用户没有登陆
         		user = new User();
+        		user.setId(sessionId);
             	user.setSessionId(sessionId);
             	user.setSession(session);
             	WebSocketConstant.SESSION_USER_MAP.put(session, user);
@@ -165,7 +167,26 @@ public class MyWebSocket1 {
         }else if(type.equals("refreshRoom")){
         	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	returnRooms(session, user);
+        }else if(type.equals("game")){
+//        	log.debug("game-info=" + jo);
+//        	{"type":"game","infoType":"interval","ball":{"x":141.7345582610817,"y":468.4278086152108,"radius":10,"color":"black","xs":-1.7562031457790073,"ys":-0.3946523923098893,"MAX_SPEED":1.8}}
+        	String infoType = jo.getString("infoType");
+        	if(infoType.equals("interval")){//定时上传消息
+        		JSONObject jSBall = jo.getJSONObject("ball");
+        		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
+        		if(user.getBall()==null){
+        			Ball ball = Ball.initPlayer(jSBall);
+        			ball.setId(user.getId());
+        			user.setBall(ball);
+        		}else{
+        			user.getBall().refresh(jSBall);
+        		}
+        		//通知其他玩家
+        		this.tellOtherPlayerLoc(user);
+        	}
+        	
         }
+    	
     }
      
     /**
@@ -317,5 +338,29 @@ public class MyWebSocket1 {
 		for(User tempUser : users){
 			sendMessage(tempUser.getSession(), refreshFriends);
 		}
+    }
+    /**
+     * @Description: 将当前玩家位置信息通知其他玩家
+     * @param @param user   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月22日
+     */
+    private void tellOtherPlayerLoc(User user){
+    	Ball ball = user.getBall();
+    	String roomId = user.getRoomId();
+    	if(roomId == null){
+    		return;
+    	}
+    	Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId);
+    	Msg msg = new Msg();
+    	msg.success("game_refreshBall", "", ball);
+    	String refreshBall = JSONObject.fromObject(msg).toString();
+    	for(User tempUser : room.getUsers()){
+    		if(!user.equals(tempUser)){
+    			sendMessage(tempUser.getSession(), refreshBall);
+    		}
+    	}
     }
 }

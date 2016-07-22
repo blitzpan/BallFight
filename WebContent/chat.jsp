@@ -14,6 +14,7 @@ String sessionId = request.getSession().getId();
 	<script type="text/javascript" src="js/jquery-easyui-1.4.3/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery-easyui-1.4.3/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="js/jquery-easyui-1.4.3/locale/easyui-lang-zh_CN.js"></script>
+	<script type="text/javascript" src="js/ball.js"></script>
 	<script type="text/javascript" src="js/json2.js"></script>
 </head>
 <style>
@@ -52,7 +53,7 @@ function setNickName(){
 	});
 }
 $(function(){
-	//ws.init();
+	ws.init();
 	game.init();
 });
 var chat={
@@ -89,7 +90,8 @@ var chat={
 	},
 	operMsg:function(msg){
 		msg = JSON.parse(msg);
-		console.log(msg.type);
+		//console.log("收到=");
+		//console.log(msg);
 		if(msg.type=='refreshUser'){
 			chat.nickName = msg.obj.userName;
 			if(msg.obj.roomId!=null && msg.obj.roomId!=''){
@@ -110,6 +112,8 @@ var chat={
 			showMsg(msg.obj.from, msg.obj.msg);
 		}else if(msg.type=='error'){
 			showMsg(msg.obj.from, msg.obj.msg);
+		}else if(msg.type.indexOf("game")>=0){
+			game.operMsgReceived(msg);
 		}
 	}
 }
@@ -131,19 +135,19 @@ var ws={
 		ws.websocket.onopen = function(event){
 			showMsg("系统", "东风-41洲际导弹准备完毕，随时准备发射！");
 			chat.login();
-		}
+		};
 		//接收到消息的回调方法
 		ws.websocket.onmessage = function(event){
 			chat.operMsg(event.data);
-		}
+		};
 		//连接关闭的回调方法
 		ws.websocket.onclose = function(){
 			showMsg("系统", "与服务器连接断开！");
-		}
+		};
 		//监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
 		window.onbeforeunload = function(){
 			ws.websocket.close();
-		}
+		};
 	},
 	sendMsg:function(msg){
 		ws.websocket.send(JSON.stringify(msg));
@@ -205,16 +209,14 @@ var game={
 	ifCanClick:true,
 	WIDTH:500,
 	HEIGHT:500,
-	MAX_SPEED:1.8,
-	ball:null,
-	x:0,
-	y:0,
-	xs:0,
-	ys:0,
+	myBall:null,
+	balls:[],
 	canvas:null,
 	ctx:null,
 	canvasCache:null,
 	ctxCache:null,
+	repaintInterval:null,
+	moveInterval:null,
 	init:function(){
 		game.canvas=document.getElementById('gameArea');
 		game.ctx=game.canvas.getContext('2d');
@@ -229,39 +231,47 @@ var game={
 		    var offset = $("#gameArea").offset();
 		    var cx=e.clientX-offset.left;
 		    var cy=e.clientY-offset.top;
-		    //console.log(cx +" - "+ cy);
 		    if(!game.isBegin){
-		    	game.x = cx;
-		    	game.y = cy;
+		    	var props = {
+		    		x:cx,
+		    		y:cy
+		    	};
+		    	game.myBall = new Ball(props);
 		    	game.repaint();
 		    }else{
-		    	var len3 = Math.sqrt(Math.pow(cx-game.x,2) + Math.pow(cy-game.y,2));
-			    game.xs = (cx-game.x)/len3 * game.MAX_SPEED;
-			    game.ys = (cy-game.y)/len3 * game.MAX_SPEED;
-			    game.ifCanClick=false;
-			    window.setTimeout("game.ifCanClick=true", 500);
-			    console.log("改变方向=" + cx + "-" + cy);
+		    	game.myBall.setSpeed(cx,cy);
+		        game.ifCanClick=false;
+		        window.setTimeout("game.ifCanClick=true", 500);
 		    }
 		}
 	},
 	beginGame:function(){
-		if(game.x==0 && game.y==0){
+		if(chat.roomId==null){
+			alert("请先创建或者进入一个房间！");
+			return;
+		}
+		if(game.myBall==null){
 			alert("请先点击设置初始位置。");
 			return;
 		}
 		game.isBegin=true;
 		game.ifCanClick = true;
-		window.setInterval(game.repaint,40);
-		window.setInterval(function(){game.move(game)},40);
+		window.setInterval(game.sendIntervalGameMsg,1000);
+		if(game.repaintInterval==null){
+			game.repaintInterval=window.setInterval(game.repaint,40);
+		}
+		if(game.moveInterval==null){
+			game.moveInterval=window.setInterval(game.move,40);
+		}
 	},
 	repaintBack:function(){
 		game.ctxCache.fillStyle='#FFF';
 		game.ctxCache.fillRect(0,0,game.WIDTH,game.HEIGHT);
 	},
-	drawABall:function(x,y,radius,color){
-		game.ctxCache.fillStyle=color;
+	drawABall:function(ball){
+		game.ctxCache.fillStyle=ball.color;
 		game.ctxCache.beginPath();
-		game.ctxCache.arc(x,y,radius,0,Math.PI*2,true);
+		game.ctxCache.arc(ball.x,ball.y,ball.radius,0,Math.PI*2,true);
 		game.ctxCache.closePath();
 		game.ctxCache.fill();
 	},
@@ -271,25 +281,59 @@ var game={
 		game.canvasCache.height=game.HEIGHT;
 		game.ctxCache = game.canvasCache.getContext('2d');
 		game.repaintBack();
-		game.drawABall(game.x,game.y,10,'black');
+		if(game.myBall!=null){
+			game.drawABall(game.myBall);
+		}
+		for(var tempBall of game.balls){
+			game.drawABall(tempBall);
+		}
 		game.ctx.drawImage(game.canvasCache, 0, 0);
 	},
-	move:function(obj){
-		obj.x = obj.x+obj.xs;
-		obj.y = obj.y + obj.ys;
-		if(obj.x<0){
-			obj.xs = obj.xs*-1;
-			obj.x=0;
-		}else if(obj.x>game.WIDTH){
-			obj.xs = obj.xs*-1;
-			obj.x=game.WIDTH;
+	move:function(){
+		if(game.myBall!=null){
+			game.myBall.move();
+		}		
+		for(var tempBall of game.balls){
+			tempBall.move();
 		}
-		if(obj.y<0){
-			obj.ys = obj.ys*-1;
-			obj.y=0
-		}else if(obj.y>game.HEIGHT){
-			obj.ys = obj.ys*-1;
-			obj.y=game.HEIGHT;
+	},
+	sendIntervalGameMsg:function(type){
+		if(!game.isBegin){
+			return;
+		}
+		var msg={
+			type:'game',
+			infoType:'interval',
+			ball:game.myBall
+		};
+		ws.sendMsg(msg);
+	},
+	operMsgReceived:function(msg){
+		//console.log(game.balls.length);
+		if(msg.type=='game_refreshBall'){
+			var ball;
+			var recBall = msg.obj;
+			var add=true;
+			for(var i=0; i<game.balls.length; i++){
+				ball = game.balls[i];
+				if(ball.id==recBall.id){
+					add = false;
+					ball.x = recBall.x;
+					ball.y = recBall.y;
+					ball.radius = recBall.radius;
+					ball.xS = recBall.xS;
+					ball.yS = recBall.yS;
+				}
+			}
+			if(add){
+				game.balls.push(new Ball(recBall));
+			}
+			if(game.repaintInterval==null){
+				game.repaintInterval=window.setInterval(game.repaint,40);
+			}
+			if(game.moveInterval==null){
+				game.moveInterval=window.setInterval(game.move,40);
+			}
 		}
 	}
 }

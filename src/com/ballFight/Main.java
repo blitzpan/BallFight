@@ -22,8 +22,8 @@ public class Main {
 		EatThread mt = new EatThread();
 		mt.start();
 		//添加player
-		Area.balls.add(Ball.initPlayer());
-		Area.balls.add(Ball.initPlayer());
-		Area.balls.add(Ball.initPlayer());
+//		Area.balls.add(Ball.initPlayer());
+//		Area.balls.add(Ball.initPlayer());
+//		Area.balls.add(Ball.initPlayer());
 	}
 }

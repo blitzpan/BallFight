@@ -1,12 +1,15 @@
 package com.ballFight.bean;
 
+import net.sf.json.JSONObject;
+
 public class Ball {
+	private String id;
 	private int type;
-	private int x;
-	private int y;
-	private int radius;
-	private int xS;
-	private int yS;
+	private double x;
+	private double y;
+	private double radius;
+	private double xS;
+	private double yS;
 	
 	public static Ball initABall(){
 		Ball b = new Ball();
@@ -16,15 +19,23 @@ public class Ball {
 		b.radius = Area.RANDOM.nextInt(BallConstant.FOOD_MAX_RADIUS);
 		return b;
 	}
-	public static Ball initPlayer(){
+	public static Ball initPlayer(JSONObject jo){
 		Ball ball = new Ball();
 		ball.setType(BallConstant.BALL_TYPE_PLAYER);
-		ball.setX(Area.RANDOM.nextInt(Area.WIDTH));
-		ball.setY(Area.RANDOM.nextInt(Area.HEIGHT));
-		ball.setxS(10);
-		ball.setyS(20);
-		ball.setRadius(30);
+		ball.setX(jo.getDouble("x"));
+		ball.setY(jo.getDouble("y"));
+		ball.setxS(jo.getDouble("xS"));
+		ball.setyS(jo.getDouble("yS"));
+		ball.setRadius(jo.getDouble("radius"));
 		return ball;
+	}
+	public String[] refresh(JSONObject jo){
+		this.setX(jo.getDouble("x"));
+		this.setY(jo.getDouble("y"));
+		this.setxS(jo.getDouble("xS"));
+		this.setyS(jo.getDouble("yS"));
+		this.setRadius(jo.getDouble("radius"));
+		return null;
 	}
 	public void dead(){
 		this.type = BallConstant.BALL_TYPE_DEAD;
@@ -35,40 +46,11 @@ public class Ball {
 	public boolean isDead(){
 		return this.type==BallConstant.BALL_TYPE_DEAD;
 	}
-	public int getX() {
-		return x;
+	public String getId() {
+		return id;
 	}
-	public void setX(int x) {
-		this.x = x;
-	}
-	public int getY() {
-		return y;
-	}
-	public void setY(int y) {
-		this.y = y;
-	}
-	public int getRadius() {
-		return radius;
-	}
-	public void setRadius(int radius) {
-		this.radius = radius;
-	}
-	public int getxS() {
-		return xS;
-	}
-	public void setxS(int xS) {
-		this.xS = xS;
-	}
-	public int getyS() {
-		return yS;
-	}
-	public void setyS(int yS) {
-		this.yS = yS;
-	}
-	@Override
-	public String toString() {
-		return "Ball [type=" + type + ", x=" + x + ", y=" + y + ", radius=" + radius + ", xS=" + xS + ", yS=" + yS
-				+ "]";
+	public void setId(String id) {
+		this.id = id;
 	}
 	public int getType() {
 		return type;
@@ -76,4 +58,35 @@ public class Ball {
 	public void setType(int type) {
 		this.type = type;
 	}
+	public double getX() {
+		return x;
+	}
+	public void setX(double x) {
+		this.x = x;
+	}
+	public double getY() {
+		return y;
+	}
+	public void setY(double y) {
+		this.y = y;
+	}
+	public double getRadius() {
+		return radius;
+	}
+	public void setRadius(double radius) {
+		this.radius = radius;
+	}
+	public double getxS() {
+		return xS;
+	}
+	public void setxS(double xS) {
+		this.xS = xS;
+	}
+	public double getyS() {
+		return yS;
+	}
+	public void setyS(double yS) {
+		this.yS = yS;
+	}
+	
 }
