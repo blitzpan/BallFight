@@ -25,8 +25,8 @@ public class Ball {
 		Ball b = new Ball();
 		b.setId(UUID.randomUUID().toString());
 		b.type = BallConstant.BALL_TYPE_FOOD;
-		b.x = Area.RANDOM.nextInt(Area.WIDTH);
-		b.y = Area.RANDOM.nextInt(Area.HEIGHT);
+		b.x = Area.getIntRandom(15, Area.WIDTH - 15);
+		b.y = Area.getIntRandom(15, Area.HEIGHT - 15);
 		b.radius = Area.getIntRandom(BallConstant.FOOD_MIN_RADIUS, BallConstant.FOOD_MAX_RADIUS);
 		return b;
 	}
