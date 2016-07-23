@@ -16,11 +16,13 @@ import javax.websocket.server.ServerEndpoint;
 import org.apache.log4j.Logger;
 
 import com.ballFight.bean.Ball;
+import com.ballFight.bean.BallConstant;
 import com.ballFight.bean.Msg;
 import com.ballFight.bean.Room;
 import com.ballFight.bean.User;
 import com.ballFight.bean.WebSocketConstant;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
  
 //该注解用来指定一个URI，客户端可以通过这个URI来连接到WebSocket。类似Servlet的注解mapping。无需在web.xml中配置。
@@ -116,6 +118,7 @@ public class MyWebSocket1 {
         		String oldRoomId = user.getRoomId();
         		removeUserFromRoom(user);
             	user.setRoomId(roomId);
+            	user.setBall(null);
             	room.getUsers().add(user);
             	room.refreshLastOperTime();
             	//返回房间信息
@@ -132,6 +135,7 @@ public class MyWebSocket1 {
         	}
         }else if(type.equals("mkRoom")){//创建一个房间
         	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
+        	user.setBall(null);
         	removeUserFromRoom(user);
         	Room room = new Room();
         	room.getUsers().add(user);
@@ -194,10 +198,61 @@ public class MyWebSocket1 {
         		}
         		//通知其他玩家
         		this.tellOtherPlayerLoc(user);
+        	}else if(infoType.equals("eat")){//吃的消息
+        		System.out.println(jo);
+        		//{"type":"game","infoType":"eat","myBall":{"type":2,"x":332.97668,"y":100.79127,"radius":8.306623,"color":"black","xS":1.7855861,"yS":-0.2273368,"MAX_SPEED":1.8},"balls":[{"id":"7c7a29c3-a4d2-4b0a-acac-52347786437e","type":1,"x":339,"y":101,"radius":2,"color":"black","xS":0,"yS":0,"MAX_SPEED":1.8}]}
+        		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
+        		String roomid = user.getRoomId();
+        		Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomid);
+        		List<Ball> otherPlays = new ArrayList<Ball>();
+        		List<Ball> foods = new ArrayList<Ball>();//通知其他用户删除的食物
+        		JSONArray balls = jo.getJSONArray("balls");
+        		Ball serMyBall = user.getBall();
+        		Ball cliMyBall = Ball.jsonToBall(jo.getJSONObject("myBall"));
+        		if(!Ball.ifLegal(serMyBall, cliMyBall)){
+        			System.out.println("非法自己" + serMyBall + "---" + cliMyBall);
+        			return;
+        		}else{
+        			System.out.println("合法自己");
+        		}
+        		JSONObject tempJo;
+        		Ball cliTempBall;
+        		Ball serTempBall;
+        		int index;
+        		User tempUser = new User(); 
+        		for(int i=0; i<balls.size(); i++){
+        			tempJo = balls.getJSONObject(i);
+        			cliTempBall = Ball.jsonToBall(tempJo);
+        			serTempBall = null;
+        			if(cliTempBall.getType() == BallConstant.BALL_TYPE_FOOD){//食物
+        				index = room.getFoods().indexOf(cliTempBall);
+        				if(index>-1){
+        					serTempBall = room.getFoods().get(index);
+        					if(Ball.ifLegal(cliTempBall, serTempBall)){//合法
+        						System.out.println("合法食物");
+        						System.out.println(room.getFoods().size());
+            					room.getFoods().remove(index);
+            					System.out.println(room.getFoods().size());
+            					foods.add(serTempBall);//这个食物需要删除
+            				}else{
+            					System.out.println("非法食物" + cliTempBall + "--" + serTempBall);
+            				}
+        				}
+        			}else if(cliTempBall.getType() == BallConstant.BALL_TYPE_PLAYER){//另一个玩家
+        				tempUser.setId(cliTempBall.getId());
+        				index = room.getUsers().indexOf(tempUser);
+        				if(index > -1){
+        					serTempBall = room.getUsers().get(index).getBall();
+        					if(Ball.ifLegal(cliTempBall, serTempBall)){//合法
+            					serTempBall.dead();
+            					otherPlays.add(serTempBall);
+            				}
+        				}
+        			}
+        		}
+    			this.returnFoodsToRoom(room);
         	}
-        	
         }
-    	
     }
      
     /**
@@ -375,7 +430,7 @@ public class MyWebSocket1 {
     	}
     }
     /**
-     * @Description:返回这个房间的食物 
+     * @Description:为当前用户返回这个房间的食物 
      * @param @param room   
      * @return void  
      * @throws
@@ -387,5 +442,26 @@ public class MyWebSocket1 {
     	msg.success("game_add_foods", "", room.getFoods());
     	String foods = JSONObject.fromObject(msg).toString();
 		sendMessage(session, foods);
+    }
+    /**
+     * @Description:向这个房间的所有人推送食物已经被吃了 
+     * @param @param room   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月23日
+     */
+    private void returnFoodsToRoom(Room room){
+    	Msg msg = new Msg();
+    	System.out.println("返回给客户端食物数= " + room.getFoods().size());
+    	msg.success("game_add_foods", "", room.getFoods());
+    	String foods = JSONObject.fromObject(msg).toString();
+    	if(room==null){
+    		return;
+    	}
+		for(User user : room.getUsers()){
+			System.out.println("发送给其他玩家");
+			this.sendMessage(user.getSession(), foods);
+		}
     }
 }

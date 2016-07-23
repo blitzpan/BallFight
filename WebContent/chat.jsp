@@ -72,6 +72,9 @@ var chat={
 				var msg = {};
 				msg['type'] = 'mkRoom';
 				msg['name'] = r;
+				game.isBegin=false;
+				game.myBall = null;
+				game.balls=[];
 				ws.sendMsg(msg);
 			}
 		});
@@ -86,6 +89,8 @@ var chat={
 		var msg = {};
 		msg['type'] = 'inRoom';
 		msg['roomId'] = id;
+		game.isBegin=false;
+		game.myBall = null;
 		ws.sendMsg(msg);
 	},
 	operMsg:function(msg){
@@ -255,6 +260,7 @@ var game={
 			return;
 		}
 		game.isBegin=true;
+		game.myBall.xS=1;
 		game.ifCanClick = true;
 		window.setInterval(game.sendIntervalGameMsg,1000);
 		if(game.repaintInterval==null){
@@ -281,34 +287,46 @@ var game={
 		game.canvasCache.height=game.HEIGHT;
 		game.ctxCache = game.canvasCache.getContext('2d');
 		game.repaintBack();
-		if(game.myBall!=null){
+		if(game.myBall!=null && game.myBall.type!=0){
 			game.drawABall(game.myBall);
 		}
 		for(var tempBall of game.balls){
-			game.drawABall(tempBall);
+			if(tempBall.type!=0){
+				game.drawABall(tempBall);
+			}
 		}
 		game.ctx.drawImage(game.canvasCache, 0, 0);
 	},
 	move:function(){
-		if(game.myBall!=null){
+		if(game.myBall!=null && game.myBall.type!=0){
 			game.myBall.move();
 		}
 		var eatIndex=[];
 		var eatBalls = [];
-		console.log(game.balls.length);
+		//console.log(game.balls.length);
 		for(var i=0;i<game.balls.length; i++){
 			var tempBall = game.balls[i];
-			tempBall.move();
-			if(game.myBall!=null && game.myBall.ifEat(tempBall)){
-				eatIndex.push(i);
+			if(tempBall.type!=0){
+				tempBall.move();
+				if(game.myBall!=null && game.myBall.type!=0 && game.myBall.ifEat(tempBall)){
+					eatIndex.push(i);
+				}
 			}
 		}
 		for(var i=0;i<eatIndex.length;i++){
 			eatBalls.push(game.balls[eatIndex[i]]);
 			game.balls.splice(eatIndex[i],1);
 		}
-		console.log(game.balls.length);
+		//console.log(game.balls.length);
 		//校验被吃的消息
+		if(eatBalls.length>0){
+			var msg = {};
+			msg['type'] = 'game';
+			msg['infoType'] = 'eat';
+			msg['myBall'] = game.myBall;
+			msg['balls'] = eatBalls;
+			ws.sendMsg(msg);
+		}
 	},
 	sendIntervalGameMsg:function(type){
 		if(!game.isBegin){
@@ -336,6 +354,7 @@ var game={
 					ball.radius = recBall.radius;
 					ball.xS = recBall.xS;
 					ball.yS = recBall.yS;
+					ball.type = recBall.type;
 				}
 			}
 			if(add){
@@ -348,6 +367,18 @@ var game={
 				game.moveInterval=window.setInterval(game.move,40);
 			}
 		}else if(msg.type=='game_add_foods'){
+			var oldBalls = game.balls.filter(function(temp){
+				if(temp.type==2){
+					return true;
+				}else{
+					return false;
+				}
+			});
+			game.balls=[];
+			game.balls = oldBalls;
+			console.log(game.balls.length);
+			console.log(msg.obj);
+			console.log("---------");
 			for(var i=0; i<msg.obj.length; i++){
 				game.balls.push(new Ball(msg.obj[i]));
 			}

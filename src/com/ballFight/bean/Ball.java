@@ -21,6 +21,30 @@ public class Ball {
 		b.radius = Area.RANDOM.nextInt(BallConstant.FOOD_MAX_RADIUS);
 		return b;
 	}
+	public static Ball jsonToBall(JSONObject jo){
+		Ball b = new Ball();
+		b.id = jo.getString("id");
+		b.type = jo.getInt("type");
+		b.x = jo.getDouble("x");
+		b.y = jo.getDouble("y");
+		b.xS = jo.getDouble("xS");
+		b.yS = jo.getDouble("yS");
+		b.radius = jo.getDouble("radius");
+		return b;
+	}
+	
+	public static boolean ifLegal(Ball b1, Ball b2){
+		if(b1==null || b2==null){
+			return false;
+		}
+		if(Math.sqrt(Math.pow(b1.x-b2.x, 2) + Math.pow(b1.y-b2.y, 2) ) > 200){//两个球圆心相差10像素，非法
+			return false;
+		}
+		if(Math.abs(b1.radius - b2.radius) > 5){//半径相差5像素，非法
+			return false;
+		}
+		return true;
+	}
 	public static Ball initAFood(){
 		Ball b = new Ball();
 		b.setId(UUID.randomUUID().toString());
@@ -37,7 +61,7 @@ public class Ball {
 		ball.setY(jo.getDouble("y"));
 		ball.setxS(jo.getDouble("xS"));
 		ball.setyS(jo.getDouble("yS"));
-		ball.setRadius(jo.getDouble("radius"));
+		ball.setRadius(10);
 		return ball;
 	}
 	public String[] refresh(JSONObject jo){
@@ -98,6 +122,34 @@ public class Ball {
 	}
 	public void setyS(double yS) {
 		this.yS = yS;
+	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Ball other = (Ball) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
+	@Override
+	public String toString() {
+		return "Ball [id=" + id + ", type=" + type + ", x=" + x + ", y=" + y + ", radius=" + radius + ", xS=" + xS
+				+ ", yS=" + yS + "]";
 	}
 	
 }

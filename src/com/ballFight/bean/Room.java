@@ -1,5 +1,6 @@
 package com.ballFight.bean;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -19,14 +20,17 @@ public class Room {
 		roomName = UUID.randomUUID().toString();
 		lastOperTime = new Date().getTime();
 	}
-	public void initFoods(int count){
+	public List<Ball> initFoods(int count){
 		if(count == 0){
 			count = BallConstant.MAX_FOOD - this.foods.size();
 		}
 		int i=0;
+		List<Ball> balls = new ArrayList<Ball>();
 		while(i++ < count){
-			foods.add(Ball.initAFood());
+			balls.add(Ball.initAFood());
 		}
+		this.foods.addAll(balls);
+		return balls;
 	}
 	
 	public List<Ball> getFoods() {

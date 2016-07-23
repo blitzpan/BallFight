@@ -1,5 +1,5 @@
 function Ball(props){
-	this.id = props.id;
+	this.id = props.id||'';
 	this.type = props.type||2;
 	this.x = props.x;
 	this.y = props.y;
