@@ -95,8 +95,6 @@ var chat={
 	},
 	operMsg:function(msg){
 		msg = JSON.parse(msg);
-		//console.log("收到=");
-		//console.log(msg);
 		if(msg.type=='refreshUser'){
 			chat.nickName = msg.obj.userName;
 			if(msg.obj.roomId!=null && msg.obj.roomId!=''){
@@ -107,9 +105,7 @@ var chat={
 			}else{
 				$("#nickName").html("昵称");
 			}
-			console.log(msg);
 			if(msg.obj.ball!=null){
-				console.log("myball=" + msg.obj.ball);
 				game.myBall = new Ball(msg.obj.ball);
 				if(game.repaintInterval==null){
 					game.repaintInterval=window.setInterval(game.repaint,40);
@@ -326,7 +322,6 @@ var game={
 			game.drawABall(game.myBall);
 		}
 		for(var tempBall of game.balls){
-			//console.log(tempBall.type);
 			if(tempBall.type!=0){
 				game.drawABall(tempBall);
 			}
@@ -339,7 +334,6 @@ var game={
 		}
 		var eatIndex=[];
 		var eatBalls = [];
-		//console.log(game.balls.length);
 		for(var i=0;i<game.balls.length; i++){
 			var tempBall = game.balls[i];
 			if(tempBall.type!=0){
@@ -353,7 +347,6 @@ var game={
 			eatBalls.push(game.balls[eatIndex[i]]);
 			game.balls.splice(eatIndex[i],1);
 		}
-		//console.log(game.balls.length);
 		//校验被吃的消息
 		if(eatBalls.length>0){
 			var msg = {};
@@ -376,7 +369,6 @@ var game={
 		ws.sendMsg(msg);
 	},
 	operMsgReceived:function(msg){
-		//console.log(game.balls.length);
 		if(msg.type=='game_refreshBall'){
 			var ball;
 			var recBall = msg.obj;
@@ -412,9 +404,6 @@ var game={
 			});
 			game.balls=[];
 			game.balls = oldBalls;
-			//console.log(game.balls.length);
-			//console.log(msg.obj);
-			//console.log("---------");
 			for(var i=0; i<msg.obj.length; i++){
 				game.balls.push(new Ball(msg.obj[i]));
 			}
@@ -432,18 +421,13 @@ var game={
                 }
             });
 		}else if(msg.type=='game_otherDead'){//game_otherDead
-			//console.log("所有被吃人员信息=");
-			//console.log(msg.obj);
 			var oldBalls = game.balls.filter(function(temp){
-				//console.log("temp.id=" + temp.id);
 				if(temp.type!=2){
 					return true;
 				}
 				if($.inArray(temp.id, msg.obj)>-1){
-					//console.log(false);
 					return false;
 				}else{
-					//console.log(false);
 					return true;
 				}
 			});
