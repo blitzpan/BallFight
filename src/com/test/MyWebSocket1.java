@@ -204,7 +204,7 @@ public class MyWebSocket1 {
         		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         		String roomid = user.getRoomId();
         		Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomid);
-        		List<Ball> otherPlays = new ArrayList<Ball>();
+        		List<User> otherPlays = new ArrayList<User>();
         		List<Ball> foods = new ArrayList<Ball>();//通知其他用户删除的食物
         		JSONArray balls = jo.getJSONArray("balls");
         		Ball serMyBall = user.getBall();
@@ -245,12 +245,15 @@ public class MyWebSocket1 {
         					serTempBall = room.getUsers().get(index).getBall();
         					if(Ball.ifLegal(cliTempBall, serTempBall)){//合法
             					serTempBall.dead();
-            					otherPlays.add(serTempBall);
+            					otherPlays.add(room.getUsers().get(index));
             				}
         				}
         			}
         		}
     			this.returnFoodsToRoom(room);
+    			if(otherPlays.size() > 0){//有玩家死亡
+    				this.notifyDeadPeople(room, otherPlays);
+    			}
         	}
         }
     }
@@ -343,6 +346,7 @@ public class MyWebSocket1 {
 		Map userMap = new HashMap();
 		userMap.put("userName", user.getName());
 		userMap.put("roomId", user.getRoomId());
+		userMap.put("ball", user.getBall());
 		msg.success("refreshUser","", userMap);
 		sendMessage(session, JSONObject.fromObject(msg).toString());
     }
@@ -463,5 +467,30 @@ public class MyWebSocket1 {
 			System.out.println("发送给其他玩家");
 			this.sendMessage(user.getSession(), foods);
 		}
+    }
+    /**
+     * @Description:通知玩家死亡信息 
+     * @param @param deadPeoples   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月25日
+     */
+    private void notifyDeadPeople(Room room, List<User> deadPeoples){
+    	Msg msg = new Msg();
+    	msg.success("game_mydead", "", "");
+    	String deadStr = JSONObject.fromObject(msg).toString();
+    	List deads = new ArrayList();//将所有死亡的用户信息通知所有人
+    	//通知死亡的用户自己已经死亡
+    	for(User user : deadPeoples){
+    		this.sendMessage(user.getSession(), deadStr);
+    		deads.add(user.getBall().getId());
+    		user.setBall(null);
+    	}
+    	msg.success("game_otherDead", "", deads);
+    	deadStr = JSONObject.fromObject(msg).toString();
+    	for(User user : room.getUsers()){
+    		this.sendMessage(user.getSession(), deadStr);
+    	}
     }
 }

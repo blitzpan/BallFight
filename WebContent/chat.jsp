@@ -107,6 +107,21 @@ var chat={
 			}else{
 				$("#nickName").html("昵称");
 			}
+			console.log(msg);
+			if(msg.obj.ball!=null){
+				console.log("myball=" + msg.obj.ball);
+				game.myBall = new Ball(msg.obj.ball);
+				if(game.repaintInterval==null){
+					game.repaintInterval=window.setInterval(game.repaint,40);
+				}
+				if(game.moveInterval==null){
+					game.moveInterval=window.setInterval(game.move,40);
+				}
+				if(game.sendInterval==null){
+					game.sendInterval = window.setInterval(game.sendIntervalGameMsg,1000);
+				}
+				game.isBegin = true;
+			}
 		}else if(msg.type=='setNickName'){
 			setNickName();
 		}else if(msg.type=='rooms'){
@@ -222,6 +237,7 @@ var game={
 	ctxCache:null,
 	repaintInterval:null,
 	moveInterval:null,
+	sendInterval:null,
 	init:function(){
 		game.canvas=document.getElementById('gameArea');
 		game.ctx=game.canvas.getContext('2d');
@@ -231,38 +247,57 @@ var game={
 			if(!game.ifCanClick){
 				return;
 			}
+			if(!game.isBegin){
+				return;
+			}
 		    e=e||event;//获取事件对象
 		    //获取事件在canvas中发生的位置
 		    var offset = $("#gameArea").offset();
 		    var cx=e.clientX-offset.left;
 		    var cy=e.clientY-offset.top;
-		    if(!game.isBegin){
-		    	var props = {
-		    		x:cx,
-		    		y:cy
-		    	};
-		    	game.myBall = new Ball(props);
-		    	game.repaint();
-		    }else{
-		    	game.myBall.setSpeed(cx,cy);
-		        game.ifCanClick=false;
-		        window.setTimeout("game.ifCanClick=true", 500);
-		    }
+	    	game.myBall.setSpeed(cx,cy);
+	    	game.sendIntervalGameMsg();
+	        game.ifCanClick=false;
+	        window.setTimeout("game.ifCanClick=true", 500);
 		}
 	},
 	beginGame:function(){
+		if(game.myBall!=null){
+			return;
+		}
 		if(chat.roomId==null){
 			alert("请先创建或者进入一个房间！");
 			return;
 		}
-		if(game.myBall==null){
-			alert("请先点击设置初始位置。");
-			return;
-		}
+		game.initMyBall();
 		game.isBegin=true;
 		game.myBall.xS=1;
 		game.ifCanClick = true;
-		window.setInterval(game.sendIntervalGameMsg,1000);
+		if(game.sendInterval==null){
+			game.sendInterval = window.setInterval(game.sendIntervalGameMsg,1000);
+		}
+		if(game.repaintInterval==null){
+			game.repaintInterval=window.setInterval(game.repaint,40);
+		}
+		if(game.moveInterval==null){
+			game.moveInterval=window.setInterval(game.move,40);
+		}
+	},
+	initMyBall:function(){
+		var props = {
+	    		x:Math.random()*20,
+	    		y:Math.random()*game.HEIGHT
+	    	};
+		game.myBall = new Ball(props);
+	},
+	replay:function(){
+		game.initMyBall();
+		game.isBegin=true;
+		game.myBall.xS=1;
+		game.ifCanClick = true;
+		if(game.sendInterval==null){
+			game.sendInterval = window.setInterval(game.sendIntervalGameMsg,1000);
+		}
 		if(game.repaintInterval==null){
 			game.repaintInterval=window.setInterval(game.repaint,40);
 		}
@@ -291,6 +326,7 @@ var game={
 			game.drawABall(game.myBall);
 		}
 		for(var tempBall of game.balls){
+			//console.log(tempBall.type);
 			if(tempBall.type!=0){
 				game.drawABall(tempBall);
 			}
@@ -376,15 +412,44 @@ var game={
 			});
 			game.balls=[];
 			game.balls = oldBalls;
-			console.log(game.balls.length);
-			console.log(msg.obj);
-			console.log("---------");
+			//console.log(game.balls.length);
+			//console.log(msg.obj);
+			//console.log("---------");
 			for(var i=0; i<msg.obj.length; i++){
 				game.balls.push(new Ball(msg.obj[i]));
 			}
 			if(game.repaintInterval==null){
 				game.repaintInterval=window.setInterval(game.repaint,40);
 			}
+		}else if(msg.type=='game_mydead'){//game_mydead
+			game.myBall=null;
+			game.isBegin=false;
+			$.messager.confirm('提示', '你被吃辣~~~~(>_<)~~~~<br/>3秒后复活？', function(r){
+                if (r){
+                	window.clearInterval(game.sendInterval);
+        			game.sendInterval = null;
+        			window.setTimeout(game.replay, 3000);
+                }
+            });
+		}else if(msg.type=='game_otherDead'){//game_otherDead
+			//console.log("所有被吃人员信息=");
+			//console.log(msg.obj);
+			var oldBalls = game.balls.filter(function(temp){
+				//console.log("temp.id=" + temp.id);
+				if(temp.type!=2){
+					return true;
+				}
+				if($.inArray(temp.id, msg.obj)>-1){
+					//console.log(false);
+					return false;
+				}else{
+					//console.log(false);
+					return true;
+				}
+			});
+			game.balls = oldBalls;
+		}else{
+			
 		}
 	}
 }
