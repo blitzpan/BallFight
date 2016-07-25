@@ -49,20 +49,7 @@ Game.prototype.beginGame=function(){
 		alert("请先创建或者进入一个房间！");
 		return;
 	}
-	this.initMyBall();
-	this.isBegin=true;
-	this.myBall.xS=1;
-	this.ifCanClick = true;
-	var curThis = this;
-	if(this.sendInterval==null){
-		this.sendInterval = window.setInterval(function(){curThis.sendIntervalGameMsg();},1000);
-	}
-	if(this.repaintInterval==null){
-		this.repaintInterval=window.setInterval(function(){curThis.repaint();},40);
-	}
-	if(this.moveInterval==null){
-		this.moveInterval=window.setInterval(function(){curThis.move();},40);
-	}
+	this.replay();
 }
 Game.prototype.initMyBall=function(){
 	var props = {
@@ -103,13 +90,11 @@ Game.prototype.repaint=function(){
 	if(this.myBall!=null && this.myBall.type!=0){
 		this.drawABall(this.myBall);
 	}
-	/*
 	for(var tempBall of this.balls){
 		if(tempBall.type!=0){
 			this.drawABall(tempBall);
 		}
 	}
-	*/
 	this.ctx.drawImage(this.canvasCache, 0, 0);
 }
 Game.prototype.move=function(){
@@ -192,18 +177,16 @@ Game.prototype.operMsgReceived=function(msg){
 		for(var i=0; i<msg.obj.length; i++){
 			this.balls.push(new Ball(msg.obj[i]));
 		}
-		var curThis=this;
-		if(this.repaintInterval==null){
-			this.repaintInterval=window.setInterval(function(){curThis.repaint();},40);
-		}
+		this.repaint();
 	}else if(msg.type=='game_mydead'){//game_mydead
 		this.myBall=null;
 		this.isBegin=false;
+		var curThis = this;
 		$.messager.confirm('提示', '你被吃辣~~~~(>_<)~~~~<br/>3秒后复活？', function(r){
             if (r){
-            	window.clearInterval(this.sendInterval);
-    			this.sendInterval = null;
-    			window.setTimeout(this.replay, 3000);
+            	window.clearInterval(curThis.sendInterval);
+            	curThis.sendInterval = null;
+    			window.setTimeout(function(){curThis.replay();}, 3000);
             }
         });
 	}else if(msg.type=='game_otherDead'){//game_otherDead

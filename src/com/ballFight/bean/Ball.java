@@ -61,7 +61,7 @@ public class Ball {
 		ball.setY(jo.getDouble("y"));
 		ball.setxS(jo.getDouble("xS"));
 		ball.setyS(jo.getDouble("yS"));
-		ball.setRadius(10);
+		ball.setRadius(jo.getDouble("radius"));
 		return ball;
 	}
 	public String[] refresh(JSONObject jo){

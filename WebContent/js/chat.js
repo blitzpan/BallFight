@@ -50,12 +50,9 @@ Chat.prototype.operMsg=function(msg){
 		}
 		if(msg.obj.ball!=null){
 			game.myBall = new Ball(msg.obj.ball);
-			game.repaint();
-			/*
 			if(game.repaintInterval==null){
-				game.repaintInterval=window.setInterval(game.repaint,40);
+				game.repaintInterval=window.setInterval(function(){game.repaint();},40);
 			}
-			*/
 			if(game.moveInterval==null){
 				game.moveInterval=window.setInterval(function(){game.move();},40);
 			}
