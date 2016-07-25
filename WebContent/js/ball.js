@@ -7,7 +7,7 @@ function Ball(props){
 	this.color = 'black';
 	this.xS = props.xS || 0;
 	this.yS = props.yS || 0;
-	this.MAX_SPEED=1.8
+	this.maxS=props.maxS||1.8;
 }
 Ball.prototype.move=function(){
 	this.x = this.x+this.xS;
@@ -30,8 +30,8 @@ Ball.prototype.move=function(){
 }
 Ball.prototype.setSpeed=function(x,y){
 	var len3 = Math.sqrt(Math.pow(x-this.x,2) + Math.pow(y-this.y,2));
-    this.xS = (x-this.x)/len3 * this.MAX_SPEED;
-    this.yS = (y-this.y)/len3 * this.MAX_SPEED;
+    this.xS = (x-this.x)/len3 * this.maxS;
+    this.yS = (y-this.y)/len3 * this.maxS;
     //console.log("改变方向=" + x + "-" + y);
 }
 Ball.prototype.ifEat = function(ball){

@@ -13,10 +13,6 @@ function Game(props){
 	this.moveInterval=null;
 	this.sendInterval=null;
 }
-Game.prototype.repaintBack=function(){
-	this.ctxCache.fillStyle='#FFF';
-	this.ctxCache.fillRect(0,0,this.WIDTH,this.HEIGHT);
-}
 Game.prototype.init=function(){
 	this.canvas=document.getElementById('gameArea');
 	this.ctx=this.canvas.getContext('2d');
@@ -51,51 +47,16 @@ Game.prototype.beginGame=function(){
 	}
 	this.replay();
 }
-Game.prototype.initMyBall=function(){
-	var props = {
-    		x:Math.random()*20,
-    		y:Math.random()*this.HEIGHT
-    	};
-	this.myBall = new Ball(props);
-}
 Game.prototype.replay=function(){
-	this.initMyBall();
-	this.isBegin=true;
-	this.myBall.xS=1;
-	this.ifCanClick = true;
-	var curThis = this;
-	if(this.sendInterval==null){
-		this.sendInterval = window.setInterval(function(){curThis.sendIntervalGameMsg();},1000);
-	}
-	if(this.repaintInterval==null){
-		this.repaintInterval=window.setInterval(function(){curThis.repaint();},40);
-	}
-	if(this.moveInterval==null){
-		this.moveInterval=window.setInterval(function(){curThis.move();},40);
+	if(this.myBall==null){
+		this.initMyBall();
 	}
 }
-Game.prototype.drawABall=function(ball){
-	this.ctxCache.fillStyle=ball.color;
-	this.ctxCache.beginPath();
-	this.ctxCache.arc(ball.x,ball.y,ball.radius,0,Math.PI*2,true);
-	this.ctxCache.closePath();
-	this.ctxCache.fill();
-}
-Game.prototype.repaint=function(){
-	this.canvasCache = document.createElement('canvas');
-	this.canvasCache.width=this.WIDTH;
-	this.canvasCache.height=this.HEIGHT;
-	this.ctxCache = this.canvasCache.getContext('2d');
-	this.repaintBack();
-	if(this.myBall!=null && this.myBall.type!=0){
-		this.drawABall(this.myBall);
-	}
-	for(var tempBall of this.balls){
-		if(tempBall.type!=0){
-			this.drawABall(tempBall);
-		}
-	}
-	this.ctx.drawImage(this.canvasCache, 0, 0);
+Game.prototype.initMyBall=function(){
+	var msg = {};
+	msg['type'] = 'game';
+	msg['infoType'] = 'initPlayer';
+	ws.sendMsg(msg);
 }
 Game.prototype.move=function(){
 	if(this.myBall!=null && this.myBall.type!=0){
@@ -126,6 +87,33 @@ Game.prototype.move=function(){
 		ws.sendMsg(msg);
 	}
 }
+Game.prototype.repaint=function(){
+	this.canvasCache = document.createElement('canvas');
+	this.canvasCache.width=this.WIDTH;
+	this.canvasCache.height=this.HEIGHT;
+	this.ctxCache = this.canvasCache.getContext('2d');
+	this.repaintBack();
+	if(this.myBall!=null && this.myBall.type!=0){
+		this.drawABall(this.myBall);
+	}
+	for(var tempBall of this.balls){
+		if(tempBall.type!=0){
+			this.drawABall(tempBall);
+		}
+	}
+	this.ctx.drawImage(this.canvasCache, 0, 0);
+}
+Game.prototype.drawABall=function(ball){
+	this.ctxCache.fillStyle=ball.color;
+	this.ctxCache.beginPath();
+	this.ctxCache.arc(ball.x,ball.y,ball.radius,0,Math.PI*2,true);
+	this.ctxCache.closePath();
+	this.ctxCache.fill();
+}
+Game.prototype.repaintBack=function(){
+	this.ctxCache.fillStyle='#FFF';
+	this.ctxCache.fillRect(0,0,this.WIDTH,this.HEIGHT);
+}
 Game.prototype.sendIntervalGameMsg=function(type){
 	if(!this.isBegin){
 		return;
@@ -141,8 +129,13 @@ Game.prototype.operMsgReceived=function(msg){
 	if(msg.type=='game_refreshBall'){
 		var ball;
 		var recBall = msg.obj;
+		if(game.myBall!=null && recBall.id==game.myBall.id){
+			this.myBall.xS = recBall.xS;
+			this.myBall.yS = recBall.yS;
+			this.myBall.maxS = recBall.maxS;
+		}
 		var add=true;
-		for(var i=0; i<this.balls.length; i++){
+		for(var i=0; this.balls!=null && i<this.balls.length; i++){
 			ball = this.balls[i];
 			if(ball.id==recBall.id){
 				add = false;
@@ -152,6 +145,7 @@ Game.prototype.operMsgReceived=function(msg){
 				ball.xS = recBall.xS;
 				ball.yS = recBall.yS;
 				ball.type = recBall.type;
+				ball.maxS = recBall.maxS;
 			}
 		}
 		if(add){
@@ -186,6 +180,7 @@ Game.prototype.operMsgReceived=function(msg){
             if (r){
             	window.clearInterval(curThis.sendInterval);
             	curThis.sendInterval = null;
+            	curThis.initMyBall();
     			window.setTimeout(function(){curThis.replay();}, 3000);
             }
         });
@@ -201,7 +196,19 @@ Game.prototype.operMsgReceived=function(msg){
 			}
 		});
 		this.balls = oldBalls;
-	}else{
-		
+	}else if(msg.type=='game_initMyBall'){
+		this.myBall = new Ball(msg.obj);
+		this.isBegin=true;
+		this.ifCanClick = true;
+		var curThis = this;
+		if(this.sendInterval==null){
+			this.sendInterval = window.setInterval(function(){curThis.sendIntervalGameMsg();},1000);
+		}
+		if(this.repaintInterval==null){
+			this.repaintInterval=window.setInterval(function(){curThis.repaint();},40);
+		}
+		if(this.moveInterval==null){
+			this.moveInterval=window.setInterval(function(){curThis.move();},40);
+		}
 	}
 }

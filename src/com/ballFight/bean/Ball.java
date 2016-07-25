@@ -5,6 +5,7 @@ import java.util.UUID;
 import net.sf.json.JSONObject;
 
 public class Ball {
+	private static double MAX_SPEED = 9;//v = MAX_SPEED/radius
 	private String id;
 	private int type;
 	private double x;
@@ -12,6 +13,7 @@ public class Ball {
 	private double radius;
 	private double xS;
 	private double yS;
+	private double maxS;
 	
 	public static Ball initABall(){
 		Ball b = new Ball();
@@ -54,14 +56,16 @@ public class Ball {
 		b.radius = Area.getIntRandom(BallConstant.FOOD_MIN_RADIUS, BallConstant.FOOD_MAX_RADIUS);
 		return b;
 	}
-	public static Ball initPlayer(JSONObject jo){
+	public static Ball initPlayer(){
 		Ball ball = new Ball();
 		ball.setType(BallConstant.BALL_TYPE_PLAYER);
-		ball.setX(jo.getDouble("x"));
-		ball.setY(jo.getDouble("y"));
-		ball.setxS(jo.getDouble("xS"));
-		ball.setyS(jo.getDouble("yS"));
-		ball.setRadius(jo.getDouble("radius"));
+		ball.setX(Area.RANDOM.nextDouble()*20);
+		ball.setY(Area.RANDOM.nextDouble()*Area.HEIGHT);
+		ball.setRadius(5);
+		double v = Ball.MAX_SPEED / 5;
+		ball.setMaxS(v);
+		ball.setxS(v);
+		ball.setyS(0);
 		return ball;
 	}
 	public String[] refresh(JSONObject jo){
@@ -70,6 +74,10 @@ public class Ball {
 		this.setxS(jo.getDouble("xS"));
 		this.setyS(jo.getDouble("yS"));
 		this.setRadius(jo.getDouble("radius"));
+		double v = Ball.MAX_SPEED / this.getRadius();
+		double a = Math.abs(Math.sqrt( (v*v) / (this.xS * this.xS + this.yS * this.yS) ));
+		this.xS = this.xS * a;
+		this.yS = this.yS * a;
 		return null;
 	}
 	public void dead(){
@@ -150,6 +158,12 @@ public class Ball {
 	public String toString() {
 		return "Ball [id=" + id + ", type=" + type + ", x=" + x + ", y=" + y + ", radius=" + radius + ", xS=" + xS
 				+ ", yS=" + yS + "]";
+	}
+	public double getMaxS() {
+		return maxS;
+	}
+	public void setMaxS(double maxS) {
+		this.maxS = maxS;
 	}
 	
 }

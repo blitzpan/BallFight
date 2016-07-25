@@ -190,16 +190,21 @@ public class MyWebSocket1 {
         		JSONObject jSBall = jo.getJSONObject("ball");
         		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         		if(user.getBall()==null){
-        			Ball ball = Ball.initPlayer(jSBall);
-        			ball.setId(user.getId());
-        			user.setBall(ball);
+//        			Ball ball = Ball.initPlayer();
+//        			ball.setId(user.getId());
+//        			user.setBall(ball);
         		}else{
         			user.getBall().refresh(jSBall);
         		}
         		//通知其他玩家
         		this.tellOtherPlayerLoc(user);
+        	}else if(infoType.equals("initPlayer")){//获取一个球球信息
+        		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
+        		Ball ball = Ball.initPlayer();
+    			ball.setId(user.getId());
+    			user.setBall(ball);
+    			returnMyBall(user);
         	}else if(infoType.equals("eat")){//吃的消息
-        		System.out.println(jo);
         		//{"type":"game","infoType":"eat","myBall":{"type":2,"x":332.97668,"y":100.79127,"radius":8.306623,"color":"black","xS":1.7855861,"yS":-0.2273368,"MAX_SPEED":1.8},"balls":[{"id":"7c7a29c3-a4d2-4b0a-acac-52347786437e","type":1,"x":339,"y":101,"radius":2,"color":"black","xS":0,"yS":0,"MAX_SPEED":1.8}]}
         		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         		String roomid = user.getRoomId();
@@ -250,6 +255,8 @@ public class MyWebSocket1 {
         				}
         			}
         		}
+        		user.getBall().refresh(jo.getJSONObject("myBall"));
+        		tellOtherPlayerLoc(user);
     			this.returnFoodsToRoom(room);
     			if(otherPlays.size() > 0){//有玩家死亡
     				this.notifyDeadPeople(room, otherPlays);
@@ -428,9 +435,9 @@ public class MyWebSocket1 {
     	msg.success("game_refreshBall", "", ball);
     	String refreshBall = JSONObject.fromObject(msg).toString();
     	for(User tempUser : room.getUsers()){
-    		if(!user.equals(tempUser)){
+//    		if(!user.equals(tempUser)){
     			sendMessage(tempUser.getSession(), refreshBall);
-    		}
+//    		}
     	}
     }
     /**
@@ -492,5 +499,19 @@ public class MyWebSocket1 {
     	for(User user : room.getUsers()){
     		this.sendMessage(user.getSession(), deadStr);
     	}
+    }
+    /**
+     * @Description:返回新生成的球球信息 
+     * @param @param user   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月25日
+     */
+    private void returnMyBall(User user){
+    	Msg msg = new Msg();
+    	msg.success("game_initMyBall", null, user.getBall());
+    	String initMyBall = JSONObject.fromObject(msg).toString();
+    	this.sendMessage(user.getSession(), initMyBall);
     }
 }
