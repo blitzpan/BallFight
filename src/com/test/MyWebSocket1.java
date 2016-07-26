@@ -190,9 +190,6 @@ public class MyWebSocket1 {
         		JSONObject jSBall = jo.getJSONObject("ball");
         		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         		if(user.getBall()==null){
-//        			Ball ball = Ball.initPlayer();
-//        			ball.setId(user.getId());
-//        			user.setBall(ball);
         		}else{
         			user.getBall().refresh(jSBall);
         		}
@@ -202,6 +199,7 @@ public class MyWebSocket1 {
         		User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         		Ball ball = Ball.initPlayer();
     			ball.setId(user.getId());
+    			ball.setName(user.getName());
     			user.setBall(ball);
     			returnMyBall(user);
         	}else if(infoType.equals("eat")){//吃的消息

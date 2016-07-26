@@ -15,6 +15,7 @@ public class Ball {
 	private double xS;
 	private double yS;
 	private double maxS;
+	private String name;
 	
 	public static Ball initABall(){
 		Ball b = new Ball();
@@ -177,13 +178,19 @@ public class Ball {
 	@Override
 	public String toString() {
 		return "Ball [id=" + id + ", type=" + type + ", x=" + x + ", y=" + y + ", radius=" + radius + ", xS=" + xS
-				+ ", yS=" + yS + "]";
+				+ ", yS=" + yS + ", maxS=" + maxS + ", name=" + name + "]";
 	}
 	public double getMaxS() {
 		return maxS;
 	}
 	public void setMaxS(double maxS) {
 		this.maxS = maxS;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 }

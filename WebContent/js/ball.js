@@ -8,6 +8,7 @@ function Ball(props){
 	this.xS = props.xS || 0;
 	this.yS = props.yS || 0;
 	this.maxS=props.maxS||1.8;
+	this.name = props.name||'匿名';
 }
 Ball.prototype.move=function(){
 	this.x = this.x+this.xS;
