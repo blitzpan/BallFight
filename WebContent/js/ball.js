@@ -4,7 +4,7 @@ function Ball(props){
 	this.x = props.x;
 	this.y = props.y;
 	this.radius = props.radius||5;
-	this.color = 'black';
+	this.color = props.color||'white';
 	this.xS = props.xS || 0;
 	this.yS = props.yS || 0;
 	this.maxS=props.maxS||1.8;

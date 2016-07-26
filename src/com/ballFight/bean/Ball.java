@@ -16,6 +16,7 @@ public class Ball {
 	private double yS;
 	private double maxS;
 	private String name;
+	private String color;
 	
 	public static Ball initABall(){
 		Ball b = new Ball();
@@ -75,6 +76,7 @@ public class Ball {
 		b.x = Area.getIntRandom(15, Area.WIDTH - 15);
 		b.y = Area.getIntRandom(15, Area.HEIGHT - 15);
 		b.radius = Area.getIntRandom(BallConstant.FOOD_MIN_RADIUS, BallConstant.FOOD_MAX_RADIUS);
+		b.setColor(BallConstant.BALL_COLORS[Area.RANDOM.nextInt(BallConstant.BALL_COLORS.length)]);
 		return b;
 	}
 	public static Ball initPlayer(){
@@ -83,6 +85,7 @@ public class Ball {
 		ball.setX(Area.RANDOM.nextDouble()*20);
 		ball.setY(Area.RANDOM.nextDouble()*Area.HEIGHT);
 		ball.setRadius(5);
+		ball.setColor(BallConstant.BALL_COLORS[Area.RANDOM.nextInt(BallConstant.BALL_COLORS.length)]);
 		double v = Ball.MAX_SPEED / 5;
 		ball.setMaxS(v);
 		ball.setxS(v);
@@ -95,7 +98,7 @@ public class Ball {
 		this.setxS(jo.getDouble("xS"));
 		this.setyS(jo.getDouble("yS"));
 		this.setRadius(jo.getDouble("radius"));
-		double v = Ball.MAX_SPEED / this.getRadius();
+		double v = Ball.MAX_SPEED / this.getRadius() + 0.2;
 		double a = Math.abs(Math.sqrt( (v*v) / (this.xS * this.xS + this.yS * this.yS) ));
 		this.xS = this.xS * a;
 		this.yS = this.yS * a;
@@ -191,6 +194,12 @@ public class Ball {
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public String getColor() {
+		return color;
+	}
+	public void setColor(String color) {
+		this.color = color;
 	}
 	
 }

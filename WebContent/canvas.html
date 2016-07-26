@@ -1,0 +1,38 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<script>
+window.onload=function(){
+	var ball = new Ball({
+		x:75,
+		y:100,
+		radius:50
+		});
+	var c=document.getElementById("myCanvas");
+	var ctx=c.getContext("2d");
+	var grd=ctx.createRadialGradient(ball.x,ball.y,0,ball.x,ball.y,ball.radius);
+	grd.addColorStop(0,'#fff');
+	grd.addColorStop(0.5,'#ff0');
+	grd.addColorStop(0.9,'#555');
+	grd.addColorStop(1,'#f00'); 
+	ctx.fillStyle=grd;
+	ctx.beginPath();
+	ctx.arc(ball.x,ball.y,ball.radius,0,2*Math.PI);
+	ctx.fill();
+	ctx.fillText(ball.name,ball.x-ctx.measureText(ball.name).width/2,ball.y-ball.radius-4);
+}
+function Ball(props){
+	this.x = props.x;
+	this.y = props.y;
+	this.radius = props.radius||5;
+	this.color = 'black';
+	this.name = props.name||'匿名';
+}
+</script>
+<body>
+<canvas id="myCanvas" width="300" height="300" style="border:1px solid #d3d3d3;">
+你的浏览器不支持h5，请更换浏览器。
+</canvas>
+</body>
+</html>

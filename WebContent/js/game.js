@@ -16,7 +16,7 @@ function Game(props){
 Game.prototype.init=function(){
 	this.canvas=document.getElementById('gameArea');
 	this.ctx=this.canvas.getContext('2d');
-	this.ctx.fillStyle='#FFF';
+	this.ctx.fillStyle='#383838';
 	this.ctx.fillRect(0,0,this.WIDTH,this.HEIGHT);
 	var curThis = this;
 	this.canvas.onclick=function(e){//给canvas添加点击事件
@@ -95,13 +95,13 @@ Game.prototype.repaint=function(){
 	this.canvasCache.height=this.HEIGHT;
 	this.ctxCache = this.canvasCache.getContext('2d');
 	this.repaintBack();
-	if(this.myBall!=null && this.myBall.type!=0){
-		this.drawABall(this.myBall);
-	}
 	for(var tempBall of this.balls){
 		if(tempBall.type!=0){
 			this.drawABall(tempBall);
 		}
+	}
+	if(this.myBall!=null && this.myBall.type!=0){
+		this.drawABall(this.myBall);
 	}
 	this.ctx.drawImage(this.canvasCache, 0, 0);
 }
@@ -111,9 +111,12 @@ Game.prototype.drawABall=function(ball){
 	this.ctxCache.arc(ball.x,ball.y,ball.radius,0,Math.PI*2,true);
 	this.ctxCache.closePath();
 	this.ctxCache.fill();
+	if(ball.type==2){
+		this.ctxCache.fillText(ball.name,ball.x-this.ctxCache.measureText(ball.name).width/2,ball.y-ball.radius-4);
+	}
 }
 Game.prototype.repaintBack=function(){
-	this.ctxCache.fillStyle='#FFF';
+	this.ctxCache.fillStyle='#383838';
 	this.ctxCache.fillRect(0,0,this.WIDTH,this.HEIGHT);
 }
 Game.prototype.sendIntervalGameMsg=function(type){
@@ -152,7 +155,12 @@ Game.prototype.operMsgReceived=function(msg){
 			}
 		}
 		if(add){
-			this.balls.push(new Ball(recBall));
+			if(recBall.type==2){//玩家
+				this.balls.push(new Ball(recBall));
+			}else{
+				this.balls.splice(0,0,new Ball(recBall));
+			}
+			
 		}
 		var curThis=this;
 		if(this.repaintInterval==null){
@@ -170,10 +178,10 @@ Game.prototype.operMsgReceived=function(msg){
 			}
 		});
 		this.balls=[];
-		this.balls = oldBalls;
 		for(var i=0; i<msg.obj.length; i++){
 			this.balls.push(new Ball(msg.obj[i]));
 		}
+		this.balls = this.balls.concat(oldBalls);
 		this.repaint();
 	}else if(msg.type=='game_mydead'){//game_mydead
 		this.myBall=null;
