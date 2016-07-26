@@ -67,13 +67,15 @@ Game.prototype.move=function(){
 	for(var i=0;this.balls!=null && i<this.balls.length; i++){
 		var tempBall = this.balls[i];
 		if(tempBall.type!=0){
-			tempBall.move();
+			if(tempBall.type==2){
+				tempBall.move();
+			}
 			if(this.myBall!=null && this.myBall.type!=0 && this.myBall.ifEat(tempBall)){
 				eatIndex.push(i);
 			}
 		}
 	}
-	for(var i=0;i<eatIndex.length;i++){
+	for(var i=eatIndex.length-1;i>-1;i--){
 		eatBalls.push(this.balls[eatIndex[i]]);
 		this.balls.splice(eatIndex[i],1);
 	}
@@ -133,6 +135,7 @@ Game.prototype.operMsgReceived=function(msg){
 			this.myBall.xS = recBall.xS;
 			this.myBall.yS = recBall.yS;
 			this.myBall.maxS = recBall.maxS;
+			return;
 		}
 		var add=true;
 		for(var i=0; this.balls!=null && i<this.balls.length; i++){

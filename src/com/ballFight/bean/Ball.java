@@ -2,6 +2,7 @@ package com.ballFight.bean;
 
 import java.util.UUID;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 public class Ball {
@@ -43,6 +44,27 @@ public class Ball {
 			return false;
 		}
 		if(Math.abs(b1.radius - b2.radius) > 5){//半径相差5像素，非法
+			return false;
+		}
+		return true;
+	}
+	public static boolean ifEatLegal(Ball serv, Ball cli, JSONArray balls){
+		if(serv==null || cli==null || balls==null){
+			return false;
+		}
+		if(Math.sqrt(Math.pow(serv.x-cli.x, 2) + Math.pow(serv.y-cli.y, 2) ) > 200){//两个球圆心相差10像素，非法
+			return false;
+		}
+		double area = 0;
+		JSONObject tempJo;
+		System.out.println(balls.toString());
+		for(int i=0; i<balls.size(); i++){
+			tempJo = balls.getJSONObject(i);
+			System.out.println(tempJo.toString());
+			area += Math.pow(tempJo.getDouble("radius"),2);
+		}
+		//服务端球的平方+被吃球的平方-客户端球的平方 理论应该=0，如果>100，那么非法
+		if(Math.pow(serv.getRadius(), 2) + area - Math.pow(cli.getRadius(), 2) > 100){
 			return false;
 		}
 		return true;

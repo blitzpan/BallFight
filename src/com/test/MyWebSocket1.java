@@ -47,7 +47,7 @@ public class MyWebSocket1 {
         this.session = session;
         webSocketSet.add(this);     //加入set中
         addOnlineCount();           //在线数加1
-        System.out.println("有新连接加入！当前在线人数为" + getOnlineCount());
+        log.info("有新连接加入！当前在线人数为" + getOnlineCount());
     }
      
     /**
@@ -57,10 +57,10 @@ public class MyWebSocket1 {
     public void onClose(){
         webSocketSet.remove(this);  //从set中删除
         subOnlineCount();           //在线数减1    
-        System.out.println("有一连接关闭！当前在线人数为" + getOnlineCount());
+        log.info("有一连接关闭！当前在线人数为" + getOnlineCount());
         
         WebSocketConstant.DELAY_DEL_SESSIONS.add(this.session);
-        System.out.println("延迟删除queue.size=" + WebSocketConstant.DELAY_DEL_SESSIONS.size());
+        log.debug("延迟删除queue.size=" + WebSocketConstant.DELAY_DEL_SESSIONS.size());
     }
      
     /**
@@ -70,7 +70,7 @@ public class MyWebSocket1 {
      */
     @OnMessage
     public void onMessage(String message, Session session) {
-//    	System.out.println("收到消息=" + message);
+    	log.debug("收到消息=" + message);
     	JSONObject jo = JSONObject.fromObject(message);
     	String type = jo.getString("type");
     	if(type.equals("login")){
@@ -214,11 +214,9 @@ public class MyWebSocket1 {
         		JSONArray balls = jo.getJSONArray("balls");
         		Ball serMyBall = user.getBall();
         		Ball cliMyBall = Ball.jsonToBall(jo.getJSONObject("myBall"));
-        		if(!Ball.ifLegal(serMyBall, cliMyBall)){
-        			System.out.println("非法自己" + serMyBall + "---" + cliMyBall);
+        		if(!Ball.ifEatLegal(serMyBall, cliMyBall, balls)){
+        			log.warn("非法自己" + serMyBall + "---" + cliMyBall);
         			return;
-        		}else{
-        			System.out.println("合法自己");
         		}
         		JSONObject tempJo;
         		Ball cliTempBall;
@@ -234,13 +232,10 @@ public class MyWebSocket1 {
         				if(index>-1){
         					serTempBall = room.getFoods().get(index);
         					if(Ball.ifLegal(cliTempBall, serTempBall)){//合法
-        						System.out.println("合法食物");
-        						System.out.println(room.getFoods().size());
             					room.getFoods().remove(index);
-            					System.out.println(room.getFoods().size());
             					foods.add(serTempBall);//这个食物需要删除
             				}else{
-            					System.out.println("非法食物" + cliTempBall + "--" + serTempBall);
+            					log.warn("非法食物" + cliTempBall + "--" + serTempBall);
             				}
         				}
         			}else if(cliTempBall.getType() == BallConstant.BALL_TYPE_PLAYER){//另一个玩家
@@ -258,6 +253,7 @@ public class MyWebSocket1 {
         		user.getBall().refresh(jo.getJSONObject("myBall"));
         		tellOtherPlayerLoc(user);
     			this.returnFoodsToRoom(room);
+    			room.initFoods(0);
     			if(otherPlays.size() > 0){//有玩家死亡
     				this.notifyDeadPeople(room, otherPlays);
     			}
@@ -272,7 +268,7 @@ public class MyWebSocket1 {
      */
     @OnError
     public void onError(Session session, Throwable error){
-        System.out.println("发生错误");
+        log.error("onerror。");
         error.printStackTrace();
     }
      
@@ -284,7 +280,7 @@ public class MyWebSocket1 {
     public void sendMessage(Session session, String message){
         try {
         	if(session.isOpen()){
-//        		System.out.println("返回消息=" + message);
+        		log.debug("返回消息=" + message);
         		session.getBasicRemote().sendText(message);
         	}
 		} catch (IOException e) {
@@ -435,9 +431,7 @@ public class MyWebSocket1 {
     	msg.success("game_refreshBall", "", ball);
     	String refreshBall = JSONObject.fromObject(msg).toString();
     	for(User tempUser : room.getUsers()){
-//    		if(!user.equals(tempUser)){
     			sendMessage(tempUser.getSession(), refreshBall);
-//    		}
     	}
     }
     /**
@@ -464,14 +458,13 @@ public class MyWebSocket1 {
      */
     private void returnFoodsToRoom(Room room){
     	Msg msg = new Msg();
-    	System.out.println("返回给客户端食物数= " + room.getFoods().size());
+    	log.debug("返回给客户端食物数= " + room.getFoods().size());
     	msg.success("game_add_foods", "", room.getFoods());
     	String foods = JSONObject.fromObject(msg).toString();
     	if(room==null){
     		return;
     	}
 		for(User user : room.getUsers()){
-			System.out.println("发送给其他玩家");
 			this.sendMessage(user.getSession(), foods);
 		}
     }
