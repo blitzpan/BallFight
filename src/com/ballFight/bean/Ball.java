@@ -57,10 +57,8 @@ public class Ball {
 		}
 		double area = 0;
 		JSONObject tempJo;
-		System.out.println(balls.toString());
 		for(int i=0; i<balls.size(); i++){
 			tempJo = balls.getJSONObject(i);
-			System.out.println(tempJo.toString());
 			area += Math.pow(tempJo.getDouble("radius"),2);
 		}
 		//服务端球的平方+被吃球的平方-客户端球的平方 理论应该=0，如果>100，那么非法

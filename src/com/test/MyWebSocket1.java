@@ -183,7 +183,7 @@ public class MyWebSocket1 {
         	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	returnRooms(session, user);
         }else if(type.equals("game")){
-//        	log.debug("game-info=" + jo);
+        	log.debug("game-info=" + jo);
 //        	{"type":"game","infoType":"interval","ball":{"x":141.7345582610817,"y":468.4278086152108,"radius":10,"color":"black","xs":-1.7562031457790073,"ys":-0.3946523923098893,"MAX_SPEED":1.8}}
         	String infoType = jo.getString("infoType");
         	if(infoType.equals("interval")){//定时上传消息
