@@ -221,5 +221,14 @@ Game.prototype.operMsgReceived=function(msg){
 		if(this.moveInterval==null){
 			this.moveInterval=window.setInterval(function(){curThis.move();},40);
 		}
+	}else if(msg.type=='game_delABall'){
+		var delId = msg.obj;
+		this.balls = this.balls.filter(function(ball){
+			if(ball.id==delId){
+				return false;
+			}else{
+				return true;
+			}
+		});
 	}
 }

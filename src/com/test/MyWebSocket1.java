@@ -26,7 +26,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
  
 //该注解用来指定一个URI，客户端可以通过这个URI来连接到WebSocket。类似Servlet的注解mapping。无需在web.xml中配置。
-@ServerEndpoint("/websocket1")
+@ServerEndpoint("/websocket/ball")
 public class MyWebSocket1 {
 	private static Logger log = Logger.getLogger(MyWebSocket1.class);
     //静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
@@ -128,6 +128,8 @@ public class MyWebSocket1 {
         		refreshRoomUsers(roomId);
         		//返回食物信息
     			returnFoods(session,room);
+    			//给老房间的人返回删除这个用户的球球的信息
+    			returnDelUserBall(oldRoomId, user.getId());
         	}else{
         		Msg msg = new Msg();
             	msg.fail("error", "该房间不存在！");
@@ -275,7 +277,7 @@ public class MyWebSocket1 {
      * @param message
      * @throws IOException
      */
-    public void sendMessage(Session session, String message){
+    public synchronized void sendMessage(Session session, String message){
         try {
         	if(session.isOpen()){
         		log.debug("返回消息=" + message);
@@ -429,7 +431,7 @@ public class MyWebSocket1 {
     	msg.success("game_refreshBall", "", ball);
     	String refreshBall = JSONObject.fromObject(msg).toString();
     	for(User tempUser : room.getUsers()){
-    			sendMessage(tempUser.getSession(), refreshBall);
+    		sendMessage(tempUser.getSession(), refreshBall);
     	}
     }
     /**
@@ -504,5 +506,29 @@ public class MyWebSocket1 {
     	msg.success("game_initMyBall", null, user.getBall());
     	String initMyBall = JSONObject.fromObject(msg).toString();
     	this.sendMessage(user.getSession(), initMyBall);
+    }
+    /**
+     * @Description:告诉房间所有人，这个球被删除了 
+     * @param @param roomId
+     * @param @param ballId  这个ballId和userId是相同的   
+     * @return void  
+     * @throws
+     * @author Panyk
+     * @date 2016年7月27日
+     */
+    private void returnDelUserBall(String roomId, String ballId){
+    	if(roomId==null){
+    		return;
+    	}
+    	Room room = WebSocketConstant.ROOMID_ROOM_MAP.get(roomId);
+    	if(room == null){
+    		return;
+    	}
+    	Msg msg = new Msg();
+    	msg.success("game_delABall", "", ballId);
+    	String delABall = JSONObject.fromObject(msg).toString();
+    	for(User user:room.getUsers()){
+    		this.sendMessage(user.getSession(), delABall);
+    	}
     }
 }

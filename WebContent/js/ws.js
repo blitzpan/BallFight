@@ -5,7 +5,7 @@ function Ws(props){
 Ws.prototype.init = function(){
 	//判断当前浏览器是否支持WebSocket
 	if('WebSocket' in window){
-		this.websocket = new WebSocket("ws://"+this.socketPath+"websocket1");
+		this.websocket = new WebSocket("ws://"+this.socketPath+"websocket/ball");
 	} else {
 		alert('您的浏览器版本太老，建议使用谷歌浏览器！');
 		window.close();
@@ -26,8 +26,8 @@ Ws.prototype.init = function(){
 	//连接关闭的回调方法
 	this.websocket.onclose = function(){
 		showMsg("系统", "与服务器连接断开！");
-		alert("与服务器连接断开，页面将刷新！");
-		window.location.href = window.location.href;
+		//alert("与服务器连接断开，请刷新页面！");
+		//window.location.href = window.location.href;
 	};
 	//监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
 	window.onbeforeunload = function(){
