@@ -191,8 +191,7 @@ Game.prototype.operMsgReceived=function(msg){
             if (r){
             	window.clearInterval(curThis.sendInterval);
             	curThis.sendInterval = null;
-            	curThis.initMyBall();
-    			window.setTimeout(function(){curThis.replay();}, 3000);
+    			window.setTimeout(function(){curThis.initMyBall();curThis.replay();}, 3000);
             }
         });
 	}else if(msg.type=='game_otherDead'){//game_otherDead

@@ -2,7 +2,7 @@
 <%
 String path = request.getContextPath();
 String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
-String socketPath = request.getServerName()+":"+request.getServerPort()+path+"/";
+String socketPath = request.getServerName()+":8080"+path+"/";
 String sessionId = request.getSession().getId();
 %>
 <!DOCTYPE HTML>
@@ -38,6 +38,7 @@ String sessionId = request.getSession().getId();
 	padding-bottom:5px;
 	text-align:right;
 }
+body{font-family: "Arial","Microsoft YaHei","黑体","宋体",sans-serif;} 
 </style>
 <script>
 var chat,ws,game;
@@ -131,8 +132,13 @@ function send(){
     	</thead>
 		</table>
 	</div>
-	<div data-options="region:'center'" style="padding:5px;background:#eee;text-align:center">
+	<div data-options="region:'center'" style="padding:5px;background:#eee;text-align:center;position:relative">
 		<canvas id="gameArea" height="600" width="600"></canvas>
+		<div style="position:absolute;top:250px;left:50%;margin-left:-100px;cursor:pointer;
+			width:200px;height:100px;
+			padding:10px;border: 5px solid #dedede;-moz-border-radius: 15px;-webkit-border-radius: 15px;border-radius:15px; ">
+			开始
+		</div>
 	</div>
 	<div data-options="region:'east',title:'  ',collapsible:true" style="width:300px;">
 		<div id="chatAccordion" class="easyui-accordion" data-options="fit:true,onUnselect:function(title,index){if(index==0){$('#chatAccordion').accordion('select',1);}else{$('#chatAccordion').accordion('select',0);}}">
