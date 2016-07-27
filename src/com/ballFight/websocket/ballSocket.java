@@ -1,4 +1,4 @@
-package com.test;
+package com.ballFight.websocket;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,12 +27,12 @@ import net.sf.json.JSONObject;
  
 //该注解用来指定一个URI，客户端可以通过这个URI来连接到WebSocket。类似Servlet的注解mapping。无需在web.xml中配置。
 @ServerEndpoint("/websocket/ball")
-public class MyWebSocket1 {
-	private static Logger log = Logger.getLogger(MyWebSocket1.class);
+public class ballSocket {
+	private static Logger log = Logger.getLogger(ballSocket.class);
     //静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
     private static int onlineCount = 0;
     //concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。若要实现服务端与单一客户端通信的话，可以使用Map来存放，其中Key可以为用户标识
-    private static CopyOnWriteArraySet<MyWebSocket1> webSocketSet = new CopyOnWriteArraySet<MyWebSocket1>();
+    private static CopyOnWriteArraySet<ballSocket> webSocketSet = new CopyOnWriteArraySet<ballSocket>();
     //与某个客户端的连接会话，需要通过它来给客户端发送数据
     private Session session;
     
@@ -298,11 +298,11 @@ public class MyWebSocket1 {
     }
  
     public static synchronized void addOnlineCount() {
-        MyWebSocket1.onlineCount++;
+        ballSocket.onlineCount++;
     }
      
     public static synchronized void subOnlineCount() {
-        MyWebSocket1.onlineCount--;
+        ballSocket.onlineCount--;
     }
     //将用户从原来房间移除
     private void removeUserFromRoom(User user) {
