@@ -107,12 +107,22 @@ Game.prototype.repaint=function(){
 	this.ctx.drawImage(this.canvasCache, 0, 0);
 }
 Game.prototype.drawABall=function(ball){
-	this.ctxCache.fillStyle=ball.color;
+	if(ball.type==2){
+		var grd=this.ctxCache.createRadialGradient(ball.x,ball.y,0,ball.x,ball.y,ball.radius);
+		grd.addColorStop(0,'#fff');
+//		grd.addColorStop(0.97,ball.color);
+//		grd.addColorStop(0.99,'#fff');
+		grd.addColorStop(1,ball.color);
+		this.ctxCache.fillStyle=grd;
+	}else{
+		this.ctxCache.fillStyle=ball.color;
+	}
 	this.ctxCache.beginPath();
 	this.ctxCache.arc(ball.x,ball.y,ball.radius,0,Math.PI*2,true);
 	this.ctxCache.closePath();
 	this.ctxCache.fill();
 	if(ball.type==2){
+		this.ctxCache.fillStyle=ball.color;
 		this.ctxCache.fillText(ball.name,ball.x-this.ctxCache.measureText(ball.name).width/2,ball.y-ball.radius-4);
 	}
 }
