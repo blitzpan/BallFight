@@ -102,6 +102,7 @@ public class Ball {
 		double a = Math.abs(Math.sqrt( (v*v) / (this.xS * this.xS + this.yS * this.yS) ));
 		this.xS = this.xS * a;
 		this.yS = this.yS * a;
+		this.maxS = v;
 		return null;
 	}
 	public void dead(){

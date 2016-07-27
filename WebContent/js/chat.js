@@ -19,6 +19,7 @@ Chat.prototype.mkRoom=function(){
 			game.myBall = null;
 			game.balls=[];
 			ws.sendMsg(msg);
+			$("#beginGameBtn").show();
 		}
 	});
 }
@@ -35,6 +36,7 @@ Chat.prototype.inRoom=function(id){
 	game.isBegin=false;
 	game.myBall = null;
 	ws.sendMsg(msg);
+	$("#beginGameBtn").show();
 }
 Chat.prototype.operMsg=function(msg){
 	msg = JSON.parse(msg);
@@ -60,6 +62,7 @@ Chat.prototype.operMsg=function(msg){
 				game.sendInterval = window.setInterval(function(){game.sendIntervalGameMsg();},1000);
 			}
 			game.isBegin = true;
+			$("#beginGameBtn").hide();
 		}
 	}else if(msg.type=='setNickName'){
 		setNickName();

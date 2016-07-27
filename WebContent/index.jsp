@@ -64,7 +64,9 @@ $(function(){
 	chat = new Chat({sessionId:'<%=sessionId %>'});
 	ws = new Ws({socketPath:'<%=socketPath%>'});
 	ws.init();
-	
+	$("#beginGameBtn").click(function(){
+		game.beginGame();
+	});
 });
 //将消息显示在网页上
 function showMsg(name, msg, send){
@@ -122,7 +124,6 @@ function send(){
 	<div data-options="region:'west',title:'房间信息',collapsible:true" style="width:250px;padding:5px;background:#eee;">
 		<a id="mkRoom" href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.mkRoom()">创建房间</a>
 		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="chat.refreshRoom()">刷新房间列表</a>
-		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="game.beginGame();">开始游戏</a>
 		<table id="roomDg" class="easyui-datagrid" data-options="singleSelect:true">
 		<thead>
 	        <tr>
@@ -134,9 +135,10 @@ function send(){
 	</div>
 	<div data-options="region:'center'" style="padding:5px;background:#eee;text-align:center;position:relative">
 		<canvas id="gameArea" height="600" width="600"></canvas>
-		<div style="position:absolute;top:250px;left:50%;margin-left:-100px;cursor:pointer;
+		<div id="beginGameBtn" style="position:absolute;top:250px;left:50%;margin-left:-100px;cursor:pointer;
 			width:200px;height:100px;
-			padding:10px;border: 5px solid #dedede;-moz-border-radius: 15px;-webkit-border-radius: 15px;border-radius:15px; ">
+			padding:10px;border: 5px solid #dedede;-moz-border-radius: 15px;-webkit-border-radius: 15px;border-radius:15px;
+			font-size:70px; line-height:100px;color:#B8E1E1 ">
 			开始
 		</div>
 	</div>

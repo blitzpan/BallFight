@@ -46,6 +46,7 @@ Game.prototype.beginGame=function(){
 		return;
 	}
 	this.replay();
+	$("#beginGameBtn").hide();
 }
 Game.prototype.replay=function(){
 	if(this.myBall==null){
@@ -134,7 +135,7 @@ Game.prototype.operMsgReceived=function(msg){
 	if(msg.type=='game_refreshBall'){
 		var ball;
 		var recBall = msg.obj;
-		if(game.myBall!=null && recBall.id==game.myBall.id){
+		if(this.myBall!=null && recBall.id==this.myBall.id){
 			this.myBall.xS = recBall.xS;
 			this.myBall.yS = recBall.yS;
 			this.myBall.maxS = recBall.maxS;
@@ -222,7 +223,6 @@ Game.prototype.operMsgReceived=function(msg){
 		}
 	}else if(msg.type=='game_delABall'){
 		var delId = msg.obj;
-		console.log(msg);
 		this.balls = this.balls.filter(function(ball){
 			if(ball.id==delId){
 				return false;
