@@ -1,8 +1,8 @@
 function Game(props){
 	this.isBegin=false;
 	this.ifCanClick=true;
-	this.WIDTH=500;
-	this.HEIGHT=500;
+	this.WIDTH=600;
+	this.HEIGHT=600;
 	this.myBall=null;
 	this.balls=[];
 	this.canvas=null;
@@ -223,6 +223,7 @@ Game.prototype.operMsgReceived=function(msg){
 		}
 	}else if(msg.type=='game_delABall'){
 		var delId = msg.obj;
+		console.log(msg);
 		this.balls = this.balls.filter(function(ball){
 			if(ball.id==delId){
 				return false;

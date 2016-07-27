@@ -7,8 +7,8 @@ import java.util.Random;
 
 public class Area {
 	public static Random RANDOM = new Random();
-	public static int WIDTH = 500;
-	public static int HEIGHT = 500;
+	public static int WIDTH = 600;
+	public static int HEIGHT = 600;
 	public static Integer BALLCOUNT = 50;
 	public static List<Ball> balls = Collections.synchronizedList(new LinkedList());
 	public static int getIntRandom(int min, int max){

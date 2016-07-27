@@ -137,6 +137,7 @@ public class MyWebSocket1 {
         	}
         }else if(type.equals("mkRoom")){//创建一个房间
         	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
+        	String oldRoomId = user.getRoomId();
         	user.setBall(null);
         	removeUserFromRoom(user);
         	Room room = new Room();
@@ -150,6 +151,10 @@ public class MyWebSocket1 {
         	this.returnCurUserFriends(user);
         	//返回食物信息
         	this.returnFoods(session, room);
+        	//老房间的所有用户刷新好友列表
+        	refreshRoomUsers(oldRoomId);
+        	//给老房间的人返回删除这个用户的球球的信息
+			returnDelUserBall(oldRoomId, user.getId());
         }else if(type.equals("chat")){//聊天
         	User user = WebSocketConstant.SESSION_USER_MAP.get(session);
         	String roomId = user.getRoomId();
@@ -277,9 +282,9 @@ public class MyWebSocket1 {
      * @param message
      * @throws IOException
      */
-    public synchronized void sendMessage(Session session, String message){
+    public void sendMessage(Session session, String message){
         try {
-        	if(session.isOpen()){
+        	if(session!=null && session.isOpen()){
         		log.debug("返回消息=" + message);
         		session.getBasicRemote().sendText(message);
         	}
